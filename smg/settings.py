@@ -41,9 +41,17 @@ INSTALLED_APPS = [
     'todo',
     'taggit',
     'anchor',
+    'location_field.apps.DefaultConfig',
     #'django.contrib.gis'
 ]
-
+LOCATION_FIELD = {
+    'provider.google.api': '//maps.google.com/maps/api/js?sensor=false',
+    'provider.google.api_key': 'AIzaSyA220LWhvp1fMx17o5jQM9fDsW-hn7B8eQ',
+    'provider.google.api_libraries': '',
+    'provider.google.map.type': 'ROADMAP',
+   'map.provider': 'openstreetmap',
+    'search.provider': 'nominatim',
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

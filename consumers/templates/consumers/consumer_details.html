@@ -1,0 +1,129 @@
+{% load my_filters %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>consumer_details of {{consumer_details.consumer_id}}</title>
+    <!-- Other head elements like CSS links -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+   <!-- Make sure you put this AFTER Leaflet's CSS -->
+ <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>  
+</head>
+<body>
+  
+  {{consumer_details}}
+
+ {{consumer_details|get_field_value|safe}}
+
+<div id="map"></div>
+<div></div>
+<div>
+<button id="update_latlng">update location</button>
+<input id="btn_get_loc" type="button" value="Get Current Position" onclick="getCurrentPosition()"
+</div>
+<style>
+  #map { height: 180px; }
+</style>
+
+<script>
+  
+ //var data = JSON.parse(document.getElementById('my-data-id').textContent);
+  var defaultlatlng = [24.823,93.957];
+  //var latlng = data.fields.location.split(",");
+  var loc = "{{location}}";
+  var consumerId = "{{consumer_id}}";
+  if(loc==""){
+    var latlng = defaultlatlng
+  }else
+    var latlng = loc.split(",");
+ var map = L.map('map').setView(latlng, 13);
+ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+}).addTo(map);
+ var markers = []; 
+ var marker = L.marker(latlng);
+  //markers.push(marker)
+  marker.bindPopup("current").openPopup();
+ marker.addTo(map);
+//marker.setStyle({fillColor: 'green'});
+ function onMapClick(e) {
+   // alert("You clicked the map at " + e.latlng);
+    for(i=0;i<markers.length;i++) {
+    map.removeLayer(markers[i]);
+    }
+    var marker = L.marker(e.latlng).addTo(map);
+    markers.push(marker)
+}
+
+map.on('click', onMapClick) 
+function getCurrentPosition(){
+  alert("get position");
+  if (navigator.geolocation) {
+    alert("navigator");
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            // Send latitude and longitude to Django backend via AJAX
+            alert(position.coords)
+            for(i=0;i<markers.length;i++) {
+    map.removeLayer(markers[i]);
+    }
+    var marker = L.marker([latitude, longitude]).addTo(map);
+    markers.push(marker)
+        });
+    } else {
+        alert("Geolocation not supported or denied")
+    }
+}
+document.getElementById("update_latlng").addEventListener('click', function() {
+  if (markers.length>0){
+    var m = markers[0];
+    fetch(`/api/update-location/${consumerId}/`, {
+                method: 'PUT', // Or 'POST' if preferred
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken') // Function to get CSRF token
+                },
+                body: JSON.stringify({ value: m.latlng[0] + "," + m.latlng[1] })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Update successful:', data.message);
+                    // Update UI if needed
+                } else {
+                    console.error('Update failed:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error during update:', error);
+            });
+  }
+    });
+  // Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+  
+
+</body>
+</html>
+
+
