@@ -18,8 +18,8 @@ class Consumer(models.Model):
     #consumer_type = models.CharField( max_length=30, null=True, blank=True)
     
     tags = TaggableManager(blank=True)
-    latlong = models.CharField(blank=True, null=True)
-    location = PlainLocationField(based_fields=["city"], zoom=17, default='24.823044419753995,93.95751714635482')
+    #latlong = models.CharField(blank=True, null=True)
+    location = PlainLocationField(based_fields=["city"], zoom=17, default='24.823044419753995,93.95751714635482', blank=True, null=True)
     def __str__(self):
         return f'{self.name}, {self.address}'
 
@@ -31,7 +31,7 @@ class ConsumerHistory(models.Model):
     tags = TaggableManager(blank=True)
     def __str__(self):
         return f'{self.remark}'
-    status = models.CharField(default="", choices=[('PENDING', 'PENDING'), ('HOLD','HOLD'), ("","")])
+    status = models.CharField(default="", choices=[('PENDING', 'PENDING'), ('HOLD','HOLD'), ("COMPLETED","COMPLETED"), ("","")], blank=True)
     status_justification = models.TextField(null=True, blank=True)
 
 class UnauthConsumer(models.Model):
