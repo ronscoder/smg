@@ -12,12 +12,13 @@
  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
      crossorigin=""></script>  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-  
+<div id="snap1">
   {{consumer_details}}
-
  {{consumer_details|get_field_value|safe}}
+</div>  
 
 <div id="map"></div>
 <div></div>
@@ -28,7 +29,20 @@
 <style>
   #map { height: 180px; }
 </style>
-
+<script>
+      html2canvas(document.getElementById('snap1')).then(function(canvas) {
+        // The 'canvas' variable now holds the image of your div
+        // You can append it to the document body or convert it to an image file
+        document.body.appendChild(canvas); // Appends the canvas to the page
+    });
+      html2canvas(document.getElementById('snap1')).then(function(canvas) {
+        const imageDataURL = canvas.toDataURL('image/png'); // Get image data as PNG
+        const link = document.createElement('a');
+        link.href = imageDataURL;
+        link.download = 'div_screenshot.png'; // Suggested filename
+        link.click(); // Trigger download
+    });
+</script>
 <script>
   
  //var data = JSON.parse(document.getElementById('my-data-id').textContent);
