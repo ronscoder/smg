@@ -37,8 +37,8 @@ def update_fields():
         #c.meter_no = row['METER NO']
         #c.connection_id = row['Prepaid Conn no']
         #c.contact_nos = row['MOBILE'] if pd.notna(row['MOBILE']) else ""
-        c.current_outstanding = row['AMOUNT PAYABLE']
-        c.bill_upto = row['BILL END']
+        c.connection_type = row['CONNECTION TYPE']
+        #c.bill_upto = row['BILL END']
         try: 
           c.save()
         except:
