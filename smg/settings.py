@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'anchor',
     'location_field.apps.DefaultConfig',
     #'django.contrib.gis'
+    'admin_searchable_dropdown'
 ]
 LOCATION_FIELD = {
     'provider.google.api': '//maps.google.com/maps/api/js?sensor=false',
