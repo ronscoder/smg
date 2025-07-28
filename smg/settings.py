@@ -32,6 +32,8 @@ ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'consumers.apps.ConsumersConfig',
+    'infrastructure.apps.InfrastructureConfig',
+    'office.apps.OfficeConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

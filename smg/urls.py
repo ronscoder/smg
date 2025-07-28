@@ -21,7 +21,7 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('todo.urls')),
+    path('', include('office.urls')),
     path("consumers/",include("consumers.urls")),
     path('anchor/', include('anchor.urls')),
 ]

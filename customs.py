@@ -1,6 +1,39 @@
 import pandas as pd
-from consumers.models import Consumer, Raid
+from consumers.models import Consumer, Raid, ConsumerGroup, RaidGroup
 from datetime import date
+from django.utils import timezone
+
+def check():
+  file = input('filename ')
+  df = pd.read_excel(file, sheet_name='non-conflict')
+  print(df.head())
+  #g = ConsumerGroup.objects.get(pk=2)
+  #gcs = g.consumer.all()
+  for i, r in df.iterrows():
+    try: 
+      c = Consumer.objects.get(pk=r['consumerid'])
+    except Consumer.DoesNotExist:
+      print(r['consumerid'])
+def update_unrechargeds():
+  file = input('filename ')
+  df = pd.read_excel(file, sheet_name='non-conflict')
+  df = df.fillna('')
+  print(df.head())
+  #g = ConsumerGroup.objects.get(pk=2)
+  #gcs = g.consumer.all()
+  rg = RaidGroup.objects.get(pk=1)
+  raids = rg.raids.all()
+  for i, r in df.iterrows():
+    c = Consumer.objects.get(consumer_id=r['consumerid'])
+    raid = next(x for x in raids if x.consumer == c)
+    print(raid)
+    raid.info = " - ".join([str(x) for x in [r['region'], r['Remark'], r['Report Text'], r['Action text']]])
+    raid.observation = r['observation']
+    raid.action = r['actions']
+    raid.save()
+    
+    
+
 def raid_report():
   
   d = date(int(input('yyyy')), int(input('mm')), int(input('dd')))
@@ -18,6 +51,9 @@ def add_consumers():
 
     for i,row in df.iterrows():
         print(i)
+        qs = Consumer.objects.filter(consumer_id=row['CONSUMER ID'])
+        if(qs.exists()):
+          continue
         c = Consumer()
         c.name = row['CONSUMER NAME']
         c.consumer_id = row['CONSUMER ID']
@@ -26,6 +62,10 @@ def add_consumers():
         c.connection_id = row['Prepaid Conn no']       
         c.phase = row['PHASE']
         c.meter_no = row['METER NO']
+        c.current_outstanding = row['AMOUNT PAYABLE']
+        c.connection_type = row['CONNECTION TYPE']
+        c.bill_upto = row['BILL END']
+        c.connection_status = row['CONSUMER STATUS']
         c.save()
 
 def update_fields():

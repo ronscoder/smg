@@ -45,7 +45,7 @@ def update_recharge():
 def raids():
   dt = input('ddmmyyyy')
   dd = datetime.date(int(dt[4:]), int(dt[2:4]), int(dt[:2]))
-  raids = Raid.objects.filter(date=dd)
+  raids = Raid.objects.filter(date=dd).filter(consumer__isnull=False)
   reports = [{
   'name': x.consumer.name,
   'address': x.consumer.address,
@@ -54,9 +54,10 @@ def raids():
   'meter_no': x.consumer.meter_no,
   'theft': 'YES' if x.theft else 'NO', 
   'is_disconnected': 'YES' if x.theft else 'NO',
-  'penalty': 'YES' if any([y.revenue for y in x.cashflow_set.all()]) else 'NO',
-  'penalty_amount': sum([y.amount for y in x.cashflow_set.all() if y.revenue]),
-  'CR#': ",".join([y.txn_ref for y in x.cashflow_set.all() if y.revenue])
+  'penalised': 'YES' if any([y.revenue for y in x.cash_flows.all()]) else 'NO',
+  'unit assessed': sum([y.total_units() for y in x.energy_assessments.all()]),
+  'penalty_amount': sum([y.amount for y in x.cash_flows.all() if y.revenue]),
+  'CR#': ",".join([y.txn_ref for y in x.cash_flows.all() if y.revenue])
   } for x in list(raids)]
   df = pd.DataFrame(reports)
   df.to_excel(f'raid_reports-{dt}.xlsx')

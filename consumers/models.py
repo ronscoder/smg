@@ -25,18 +25,18 @@ class CashFlow(models.Model):
   txn_date = models.DateField(default=timezone.now)
   txn_text = models.CharField(max_length=100, blank=True, null=True)
   amount = models.FloatField()
+  internal = models.BooleanField(default=False)
   debit= models.BooleanField(default=False)
   revenue = models.BooleanField(default=False)
   txn_ref = models.CharField(max_length=50, blank=True, null=True)
-  internal = models.BooleanField(default=False)
   def __str__(self):
     return f'{"-" if self.debit else "+"}{self.amount} | {self.txn_text}'
   def save(self, *args, **kwargs):
     if(self.revenue==True and (self.txn_ref==None or self.txn_ref=="")):
       return
     super().save(*args, **kwargs)
-  raid = models.ForeignKey('Raid', on_delete=models.CASCADE, null=True, blank=True)
-  chistory = models.ForeignKey('ConsumerHistory', on_delete=models.CASCADE, null=True, blank=True)
+  #raid = models.ForeignKey('Raid', on_delete=models.CASCADE, null=True, blank=True)
+  #chistory = models.ForeignKey('ConsumerHistory', on_delete=models.CASCADE, null=True, blank=True)
 class LoadSurvey(models.Model):
   appliance = models.CharField(max_length=30, null=True, blank=True)
   kw = models.FloatField()
@@ -152,9 +152,7 @@ class EnergyAssessment(models.Model):
   def demand_charge(self):
     if(self._state.adding):
       return 0
-    delta = relativedelta(self.period_to, self.period_to)
-    total_months = delta.years * 12 + delta.months + 1
-    return total_months*self.total_kw()*self.tariff.demand_charge
+    return self.no_months()*self.total_kw()*self.tariff.demand_charge
     
   def penalised_energy_charge(self):
     if(self._state.adding):
@@ -164,6 +162,7 @@ class EnergyAssessment(models.Model):
     return f'{self.title}: {self.total_kw()}kW, {self.no_months()} months,energy charge: {self.energy_charge()}x3 = ₹{self.penalised_energy_charge()}, {self.demand_charge()}'
 class Consumer(models.Model):
     consumer_id = models.IntegerField(primary_key=True)
+    subdivision = models.CharField(max_length=20, default="smg")
     name = models.CharField(max_length=100)
     address = models.CharField(max_length=200)
     contact_nos = models.CharField(max_length=30,null=True,blank=True)
@@ -172,13 +171,10 @@ class Consumer(models.Model):
     phase = models.CharField(max_length=10, choices=[('SINGLE', 'SINGLE'), ('THREE', 'THREE')]) 
     current_outstanding = models.DecimalField(default=0, max_digits=15, decimal_places=2)
     bill_upto = models.DateField(null=True, blank=True)
-    #consumer_type = models.CharField( max_length=30, null=True, blank=True)
-    
+    connection_status = models.CharField(default='ACTIVE')
     tags = TaggableManager(blank=True)
-    #latlong = models.CharField(blank=True, null=True)
-    location = models.CharField(default='24.823,93.957', blank=True, null=True)
     connection_type = models.CharField(max_length=30, blank=True, null=True)
-    #solar=models.BooleanField(default=False)
+    location = models.CharField(default='24.823,93.957', blank=True, null=True)
     infos = models.ManyToManyField('ConsumerInfo', blank=True)
     def __str__(self):
         return f'{self.consumer_id}, {self.name}, {self.address}, {self.meter_no}'
@@ -193,9 +189,9 @@ class ConsumerInfo(models.Model):
     return f'{self.field}: {self.value}'
 class SolarConsumer(models.Model):
   consumer = models.OneToOneField(Consumer, on_delete= models.SET_NULL, null=True)
-  capacity_kw = models.FloatField()
-  net_meter_no = models.CharField(max_length=30)
-  start_date = models.DateField()
+  capacity_kw = models.FloatField(blank=True, null=True)
+  net_meter_no = models.CharField(max_length=30, blank=True, null=True)
+  start_date = models.DateField(blank=True, null=True)
   remark = models.CharField(max_length=100, blank=True, null=True)
   def __str__(self):
     return f'{self.consumer}'
@@ -204,23 +200,25 @@ class ConsumerHistory(models.Model):
     date = models.DateField(default=timezone.now)
     raid = models.BooleanField(default=False)
     internal = models.BooleanField(default=False)
-    remark = models.CharField(max_length=500, null=True, blank=True)
+    #subject = models.CharField(max_length=50, null=True, blank= True, choices=[('theft','Theft'),('unrecharged','unrecharged'),('defaulted','defaulted'),])
+    remark = models.TextField(null=True, blank=True)
     theft = models.BooleanField(default=False)
     unused = models.BooleanField(default=False)
     defaulter = models.BooleanField(default=False)
-    meter_defective = models.BooleanField(default=False)
+    #meter_defective = models.BooleanField(default=False)
     mark = models.BooleanField(default=False)
-    meter_replaced = models.BooleanField(default=False)
+    #meter_replaced = models.BooleanField(default=False)
     disconnected = models.BooleanField(default=False)
-    summoned = models.BooleanField(default=False)
+    #summoned = models.BooleanField(default=False)
     resolution = models.CharField(max_length=300, blank=True, null= True)
     tags = TaggableManager(blank=True)
     def __str__(self):
         return f'{self.consumer} — {self.remark}'
-    status = models.CharField(default="", choices=[('PENDING', 'PENDING'), ('HOLD','HOLD'), ("COMPLETED","COMPLETED"), ("SKIPPED","SKIPPED"), ("","")], blank=True)
-    status_justification = models.CharField(null=True, blank=True)
+    #status = models.CharField(default="", choices=[('PENDING', 'PENDING'), ('HOLD','HOLD'), ("COMPLETED","COMPLETED"), ("SKIPPED","SKIPPED"), ("","")], blank=True)
+    #status_justification = models.CharField(null=True, blank=True)
     energy_assessments = models.ManyToManyField(EnergyAssessment, blank=True)
-    #cash_flows = models.ManyToManyField(CashFlow, blank=True)
+    #cash_flows = models.ForeignKey(CashFlow, on_delete=models.SET_NULL,  null=True, blank=True)
+    cash_flows = models.ManyToManyField(CashFlow, blank=True)
 class Staff(models.Model):
   name = models.CharField(max_length=100)
   is_staff = models.BooleanField(default=True)
@@ -254,15 +252,15 @@ class Raid(models.Model):
     date = models.DateField(default=timezone.now)
     consumer = models.ForeignKey(Consumer, on_delete=models.SET_NULL, null=True, blank=True)
     unauth = models.ForeignKey(UnauthConsumer, on_delete=models.SET_NULL, null=True, blank=True)
-    observation = models.CharField(max_length=200, null=True, blank=True)
+    observation = models.TextField(null=True, blank=True)
     ok = models.BooleanField(default=False)
     theft = models.BooleanField(default=False)
     unauthorised = models.BooleanField(default=False)
+    unused = models.BooleanField(default=False)
     underbilled = models.BooleanField(default=False)
     image = models.ImageField(upload_to='images/', null=True, blank=True)
     tags = TaggableManager(blank=True)
-    unused = models.BooleanField(default=False)
-    info = models.CharField(max_length=200, null=True, blank=True)
+    info = models.TextField(null=True, blank=True)
     is_disconnected = models.BooleanField(default=False)
     penalty_paid = models.BooleanField(default=False)
     action = models.CharField(max_length=200, null=True, blank=True)
@@ -270,6 +268,96 @@ class Raid(models.Model):
     skip = models.BooleanField(default=False)
     energy_assessments = models.ManyToManyField(EnergyAssessment, blank=True)
     staffs_assignments = models.ForeignKey(StaffAssignment, on_delete=models.SET_NULL, null=True, blank=True)
-    #cash_flows = models.ManyToManyField(CashFlow, blank=True)
+    cash_flows = models.ManyToManyField(CashFlow, blank=True)
     def __str__(self):
         return f'{self.unauth}' if self.consumer==None else f'{self.consumer}, {self.theft}, {self.is_disconnected}'
+class TemporaryConnection(models.Model):
+    report_date = models.DateField(default=timezone.now)
+    name = models.CharField(max_length=100)
+    address = models.CharField(max_length=100)
+    contact_nos= models.CharField(max_length=30, null=True, blank=True)
+    purpose = models.CharField(max_length=100, null=True, blank=True)
+    loads = models.ManyToManyField(LoadSurvey, blank=True)
+    authorised_by = models.ForeignKey(Staff, on_delete=models.SET_NULL, null=True, related_name="authorised_by")
+    connected_by = models.ManyToManyField(Staff, blank=True, related_name="connected_by")
+    remark = models.CharField(max_length=100, null=True, blank=True)
+   # tags = TaggableManager(blank=True)
+    followup = models.CharField(max_length=100, null=True, blank=True)
+    is_closed = models.BooleanField(default=False)
+    energy_assessments = models.ManyToManyField(EnergyAssessment, blank=True)
+    cash_flows = models.ManyToManyField(CashFlow, blank=True)
+    def __str__(self):
+        return f'{self.name}, {self.address}'
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+# Create your models here.
+class Todo(models.Model):
+    content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+    content = models.TextField(max_length=255,null=False)
+    status = models.CharField(max_length=10, default='PENDING', choices =[('PENDING','PENDING'),('DONE','DONE'),('HOLD','HOLD'),('SKIP','SKIP')])
+    remark = models.TextField(max_length=200, blank=True, null=True)
+class Meter(models.Model):
+  consumer = models.ForeignKey(Consumer, on_delete=models.SET_NULL, null=True)
+  record_date = models.DateField(default=timezone.now)
+  picked_date = models.DateField(default=timezone.now, blank=True, null=True)
+  picked_by = models.ManyToManyField(Staff, related_name='picked_by')
+  reason = models.CharField(max_length=100)
+  custody = models.ManyToManyField(Staff, related_name='custody')
+  balance = models.FloatField(default=0)
+  postpaid = models.BooleanField(default=False)
+  new_meter = models.CharField(max_length=10, blank=True, null=True)
+  action_text = models.CharField(max_length=100, blank=True, null=True)
+  action_date = models.DateField(blank=True, null=True)
+  installed_by = models.ManyToManyField(Staff, related_name='installed_by', blank=True)
+  action_date = models.DateField(blank=True, null=True)
+  remark= models.CharField(max_length=100, blank=True, null=True)
+  prioritized = models.BooleanField(default=False)
+  is_resolved = models.BooleanField(default=False)
+  def __str__(self):
+    return ", ".join([str(self.consumer)])
+class Complaint(models.Model):
+  consumer = models.ForeignKey(Consumer, on_delete=models.SET_NULL, null=True)
+  date= models.DateField(default=timezone.now)
+  complaint = models.TextField()
+  action = models.TextField(blank=True, null=True)
+  status = models.CharField(max_length=100, blank=True, null=True)
+  is_resolved = models.BooleanField(default=False)
+  remark = models.CharField(max_length=100, blank=True, null=True)
+  #logs = models.ManyToManyField('Log', blank=True)
+  def __str__(self):
+    return ", ".join([str(self.consumer), self.complaint, str(self.is_resolved)])
+class Log(models.Model):
+  awaiting = models.BooleanField(default=False)
+  date = models.DateField(default=timezone.now)
+  text1 = models.CharField(max_length=100)
+  text2= models.CharField(max_length=100, blank=True, null=True)
+  def __str__(self):
+    return ", ".join([self.text1, str(self.date),])
+
+class ComplaintLog(models.Model):
+  complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE)
+  log = models.ForeignKey(Log, on_delete=models.CASCADE)
+  #awaiting = models.BooleanField(default=False)
+  
+class HistoryLog(models.Model):
+  history = models.ForeignKey(ConsumerHistory, on_delete=models.CASCADE)
+  log = models.ForeignKey(Log, on_delete=models.CASCADE)
+
+from office.models import Work
+class HistoryWork(models.Model):
+  history = models.ForeignKey(ConsumerHistory, on_delete=models.CASCADE)
+  work = models.ForeignKey(Work, on_delete=models.CASCADE)
+
+class ConsumerWork(models.Model):
+  consumer=models.ForeignKey(Consumer, on_delete=models.CASCADE)
+  work=models.ForeignKey(Work, on_delete=models.CASCADE)
+  def __str__(self):
+    return "•".join([str(self.consumer), str(self.work)])
+    
+class RaidGroup(models.Model):
+  name = models.CharField(max_length=100)
+  raids = models.ManyToManyField(Raid, blank=True)
+  def __str__(self):
+    return ":".join([str(self.id), self.name])

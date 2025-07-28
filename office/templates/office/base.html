@@ -1,0 +1,39 @@
+<html>
+
+<head>
+    {% load static %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse; /* This collapses the borders */
+  padding: 2px 4px;
+}
+</style>
+</head>
+
+<body>
+  <div>
+  
+<div id="navs" class="m-4 border-b">
+  <a href="{% url 'unrecharged_reports' %}" class="text-purple-600 p-2">Unrecharged Reports</a>
+</div>  
+
+  </div>
+    <div id='content'>
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <div id="right">
+        {% block right %}
+        {% endblock %}
+    </div>
+    <div style="height: 20vh;"></div>
+    </div>
+    {% block script %}
+    {% endblock %}
+</body>
+</html>
