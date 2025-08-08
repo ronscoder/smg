@@ -24,7 +24,7 @@ urlpatterns = [
     path('', include('office.urls')),
     path("consumers/",include("consumers.urls")),
     path("projects/",include("projects.urls")),
-    path('anchor/', include('anchor.urls')),
+   # path('anchor/', include('anchor.urls')),
 ]
 
 if settings.DEBUG:

@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'todo',
     'taggit',
-    'anchor',
+    #'anchor',
     'location_field.apps.DefaultConfig',
     #'django.contrib.gis'
     'admin_searchable_dropdown',
