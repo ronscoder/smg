@@ -18,7 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-8t$*sti4vw&_138$5^dqg)!fhiq^nm5%741e3d=27!l(n0i+3m'
 
@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'consumers.apps.ConsumersConfig',
     'infrastructure.apps.InfrastructureConfig',
     'office.apps.OfficeConfig',
+    'projects.apps.ProjectsConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -45,7 +46,10 @@ INSTALLED_APPS = [
     'anchor',
     'location_field.apps.DefaultConfig',
     #'django.contrib.gis'
-    'admin_searchable_dropdown'
+    'admin_searchable_dropdown',
+    'nested_admin',
+    'more_admin_filters',
+    'django_admin_multiple_choice_list_filter'
 ]
 LOCATION_FIELD = {
     'provider.google.api': '//maps.google.com/maps/api/js?sensor=false',

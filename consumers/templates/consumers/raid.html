@@ -1,0 +1,19 @@
+{% extends 'office/base.html' %}
+{% load my_filters %}
+
+{% block content %}
+{% for k, v in raid.items %}
+{% if not k|first == "_" %}
+ <div class="">
+   <div class="inline-block w-1/2 text-sm overflow-scroll">{{k}}</div>
+  {% if k == "id" %}
+   <a class="inline-block underline" 
+   href="/admin/consumers/raid/{{v}}"
+   >{{v}}</a>
+  {% else %}
+   <div class="inline-block ">{{v}}</div>
+  {% endif %}
+ </div>
+ {% endif %}
+{% endfor %}
+{% endblock %}

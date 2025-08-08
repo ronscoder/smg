@@ -1,0 +1,20 @@
+{% extends 'office/base.html' %}
+{% block content %}
+<h2 class="font-bold fixed top-20 left-0 right-0 h-20">{{group}}</h2>
+<div class=" fixed overflow-y-scroll top-32 left-0 right-0 bottom-0">
+  <div class="">
+ {% for c in consumers %}
+ <div class="border p-2">
+   <div>
+ {{c}}
+   </div>
+   <div>
+   <a href="/admin/consumers/consumer/{{c.consumer_id}}" class="underline text-blue-600">
+   edit
+   </a>
+   </div>
+ </div>
+ {% endfor %}
+ </div>
+ </div>
+{% endblock %}

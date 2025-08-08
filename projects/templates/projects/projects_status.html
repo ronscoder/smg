@@ -1,0 +1,50 @@
+{% extends "office/base.html" %}
+{% block content %}
+<div id="projects_app">
+
+  <div id="projects" class="my-4 overflow-scroll">
+    {{pv_html|safe}}
+  </div>
+
+  <div>
+    <a class="border bg-gray-300 p-2" href="{% url 'download_projects_progress' %}">
+      download
+    </a>
+  </div>
+
+  <div>
+    <button @click="sharediv" hidden>share</button>
+  </div>
+  <div>
+    ${ count }
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+  const {
+    createApp,
+    ref
+  } = Vue;
+  const app = createApp( {
+    setup() {
+      return {
+        count: ref(0),
+      }
+    },
+    methods: {
+      sharediv() {
+        html2canvas(document.getElementById('projects')).then(function(canvas) {
+          document.body.appendChild(canvas);
+          var img = canvas.toDataURL("image/png");
+          //window.open(img);
+        });
+      }
+    }
+  });
+  app.config.compilerOptions.delimiters = ['${', '}'];
+  app.mount('#projects_app')
+
+</script>
+{% endblock %}

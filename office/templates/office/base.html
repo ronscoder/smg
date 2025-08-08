@@ -1,10 +1,11 @@
 <html>
-
 <head>
     {% load static %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <style>
   table, th, td {
   border: 1px solid black;
@@ -16,13 +17,29 @@
 
 <body>
   <div>
-  
 <div id="navs" class="m-4 border-b">
-  <a href="{% url 'unrecharged_reports' %}" class="text-purple-600 p-2">Unrecharged Reports</a>
+  <div class="border">
+    <a href="{% url 'raidgroups' %}" class="text-purple-600 p-2">Raid Groups
+    </a>
+    <a href="{% url 'consumergroups' %}" class="text-purple-600 p-2">
+      Consumer Groups
+    </a>
+    <a href="{% url 'duplicacy_report' %}" class="text-purple-600 p-2">
+      Duplicacy Report
+    </a>
+  </div>
+  <div class="border my-4">
+    <div class="p-2">
+    <a href="{% url 'projects_status' %}">
+      Project status
+    </a>
+    </div>
+  </div>
+  </div>
 </div>  
 
   </div>
-    <div id='content'>
+    <div id='content' class="p-4">
         {% block content %}
         {% endblock %}
     </div>
@@ -33,7 +50,27 @@
     </div>
     <div style="height: 20vh;"></div>
     </div>
-    {% block script %}
-    {% endblock %}
+{% block script %}
+{% endblock %}
+    {% verbatim %}
+<div id="app">
+  <button @click="count++" class="border">
+    Count is: ${ count }
+  </button>
+</div>
+{% endverbatim %}
+<script>
+  const { createApp, ref } = Vue;
+  const app = createApp({
+        setup() {
+          return {
+            count: ref(0)
+          }
+        }
+      });
+  app.config.compilerOptions.delimiters = ['${', '}'];
+  app.mount('#app')
+  
+</script>
 </body>
 </html>

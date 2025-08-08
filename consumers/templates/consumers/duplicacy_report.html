@@ -1,0 +1,45 @@
+{% extends "office/base.html" %}
+{% block content %}
+<a href="{% url 'download_duplicates' %}" class="underline font-bold">
+  Download duplicates
+</a>
+<table class="border border-collapse">
+ {% for d in data %}
+<tr>
+  <td>
+      <div>
+      {{d.consumer}}
+      </div>
+      <div class="font-bold">
+      Meter No: {{d.consumer.meter_no}}
+      </div>
+      <div class="font-bold">
+        {{d.consumer.current_outstanding}}
+        </div>
+      <div class="underline">
+      <a href="/admin/consumers/consumer/{{d.consumer.consumer_id}}" target="_blank">details</a>
+      </div>
+  </td>
+  <td>
+    <div>
+   {{d.consumer_b}}
+    </div>
+    <div class="font-bold">
+   Meter No: {{d.consumer_b.meter_no}}
+    </div>
+      <div class="font-bold">
+        {{d.consumer_b.current_outstanding}}
+        </div>
+    <div class="underline">
+      <a href="/admin/consumers/consumer/{{d.consumer_b.consumer_id}}" target="_blank">details</a>
+    </div>
+  </td>
+  <td>
+    <div>
+      <a href="/admin/consumers/multiconsumer/{{d.id}}" target="_blank" class="rounded border">edit</a>
+    </div>
+  </td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}

@@ -17,3 +17,4 @@ def bs(month_unit):
 bs(int(input('units')))
 
 
+http://192.0.0.2:8000/admin/consumers/raid/59/change/?_changelist_filters=q%3D48532221

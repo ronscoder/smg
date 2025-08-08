@@ -52,7 +52,7 @@ def raids():
   'contact_no': x.consumer.contact_nos,
   'consumer_id': x.consumer.consumer_id,
   'meter_no': x.consumer.meter_no,
-  'theft': 'YES' if x.theft else 'NO', 
+  'theft': 'YES' if any([x.obs.theft for x in x.observations.all()]) else 'NO', 
   'is_disconnected': 'YES' if x.theft else 'NO',
   'penalised': 'YES' if any([y.revenue for y in x.cash_flows.all()]) else 'NO',
   'unit assessed': sum([y.total_units() for y in x.energy_assessments.all()]),

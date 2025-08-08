@@ -4,6 +4,15 @@ from django.utils import timezone
 #from anchor.models.fields import SingleAttachmentField
 from location_field.models.plain import PlainLocationField
 from taggit.managers import TaggableManager
+
+class State(models.Model):
+  name = models.CharField(max_length=20)
+  text = models.CharField(max_length=50, blank=True, null=True)
+  number = models.IntegerField(null=True, blank=True)
+  decimal = models.FloatField(null=True, blank=True)
+  boolean = models.BooleanField(null=True, blank=True)
+  def __str__(self):
+    return f'{self.pk} {self.name}'
 class RechargeHistory(models.Model):
   connection_id = models.CharField(max_length=20)
   meter_no = models.CharField(max_length=10)
@@ -13,14 +22,20 @@ class RechargeHistory(models.Model):
   paid_on = models.DateField()
   pay_mode = models.CharField(max_length=20, null=True, blank=True)
 class ConsumerGroup(models.Model):
-  #id = models.Auto(primary_key=True)
-  #group_id = models.IntegerField(default=0)
-  consumer = models.ManyToManyField('Consumer', blank=True)
-  group_name = models.CharField(max_length=30)
-  #group_activated = models.BooleanField(default=False)
-  
+  group_code = models.CharField(max_length=30, unique=True)
+  group_name = models.CharField(max_length=50)
+  description = models.TextField(blank=True, null=True)
+  status = models.CharField(max_length=50, blank=True, null=True)
   def __str__(self):
-    return f'{self.id}: {self.group_name}'
+    return f'{self.id}: {self.group_code} {self.group_name}'
+    
+class ConsumerGrouping(models.Model):
+  group = models.ForeignKey(ConsumerGroup, on_delete=models.CASCADE)
+  consumer = models.ForeignKey('Consumer', on_delete=models.CASCADE)
+  remark = models.CharField(max_length=100, null=True, blank=True)
+  def __str__(self):
+    return ":".join([str(self.group), str(self.consumer)])
+  
 class CashFlow(models.Model):
   txn_date = models.DateField(default=timezone.now)
   txn_text = models.CharField(max_length=100, blank=True, null=True)
@@ -30,13 +45,12 @@ class CashFlow(models.Model):
   revenue = models.BooleanField(default=False)
   txn_ref = models.CharField(max_length=50, blank=True, null=True)
   def __str__(self):
-    return f'{"-" if self.debit else "+"}{self.amount} | {self.txn_text}'
+    return f'{"-" if (self.debit or self.revenue) else "+"}{self.amount}|{self.txn_date}|{self.txn_text}'
   def save(self, *args, **kwargs):
     if(self.revenue==True and (self.txn_ref==None or self.txn_ref=="")):
       return
     super().save(*args, **kwargs)
-  #raid = models.ForeignKey('Raid', on_delete=models.CASCADE, null=True, blank=True)
-  #chistory = models.ForeignKey('ConsumerHistory', on_delete=models.CASCADE, null=True, blank=True)
+
 class LoadSurvey(models.Model):
   appliance = models.CharField(max_length=30, null=True, blank=True)
   kw = models.FloatField()
@@ -115,12 +129,6 @@ class EnergyAssessment(models.Model):
       print(f'({self.tariff.rate1}*{b1} + {self.tariff.rate2}*{b2} + {self.tariff.rate3}*{b3})*{self.tariff.load_factor}*{self.tariff.demand_factor}')
       energy_charge += (self.tariff.rate1*b1 + self.tariff.rate2*b2 + self.tariff.rate3*b3)
     return round(energy_charge,2)
-      
-    
-  #rate = models.FloatField(default=5.1)
-  #demand_factor = models.FloatField(default= 0.45 )
-  #load_factor = models.FloatField(default=0.4)
-  #fixed_charge = models.FloatField(default=65)
   penalty_factor = models.FloatField(default=3.0)
   def day_counts(self):
     if(self._state.adding):
@@ -136,12 +144,6 @@ class EnergyAssessment(models.Model):
       return 0
     print(f'{self.day_counts()} * {self.daily_units()}')
     return round(self.day_counts() * self.daily_units(),1)
-  '''
-  def energy_charge(self):
-    if(self._state.adding):
-      return 0
-    return round(self.total_units() * self.rate)
-  '''
   def no_months(self):
     if(self._state.adding):
       return 0
@@ -159,7 +161,7 @@ class EnergyAssessment(models.Model):
       return 0
     return round(self.energy_charge() * self.penalty_factor)
   def __str__(self):
-    return f'{self.title}: {self.total_kw()}kW, {self.no_months()} months,energy charge: {self.energy_charge()}x3 = ₹{self.penalised_energy_charge()}, {self.demand_charge()}'
+    return f'{self.title}: energy charge: {self.energy_charge()}x3 = ₹{self.penalised_energy_charge()}, {self.demand_charge()}, {self.total_kw()}kW, {self.no_months()} months'
 class Consumer(models.Model):
     consumer_id = models.IntegerField(primary_key=True)
     subdivision = models.CharField(max_length=20, default="smg")
@@ -174,6 +176,7 @@ class Consumer(models.Model):
     connection_status = models.CharField(default='ACTIVE')
     tags = TaggableManager(blank=True)
     connection_type = models.CharField(max_length=30, blank=True, null=True)
+    load_kw = models.IntegerField(blank=True, null=True)
     location = models.CharField(default='24.823,93.957', blank=True, null=True)
     infos = models.ManyToManyField('ConsumerInfo', blank=True)
     def __str__(self):
@@ -196,29 +199,29 @@ class SolarConsumer(models.Model):
   def __str__(self):
     return f'{self.consumer}'
 class ConsumerHistory(models.Model):
-    consumer = models.ForeignKey(Consumer, on_delete=models.CASCADE)
-    date = models.DateField(default=timezone.now)
-    raid = models.BooleanField(default=False)
-    internal = models.BooleanField(default=False)
-    #subject = models.CharField(max_length=50, null=True, blank= True, choices=[('theft','Theft'),('unrecharged','unrecharged'),('defaulted','defaulted'),])
-    remark = models.TextField(null=True, blank=True)
-    theft = models.BooleanField(default=False)
-    unused = models.BooleanField(default=False)
-    defaulter = models.BooleanField(default=False)
-    #meter_defective = models.BooleanField(default=False)
-    mark = models.BooleanField(default=False)
-    #meter_replaced = models.BooleanField(default=False)
-    disconnected = models.BooleanField(default=False)
-    #summoned = models.BooleanField(default=False)
-    resolution = models.CharField(max_length=300, blank=True, null= True)
-    tags = TaggableManager(blank=True)
-    def __str__(self):
-        return f'{self.consumer} — {self.remark}'
-    #status = models.CharField(default="", choices=[('PENDING', 'PENDING'), ('HOLD','HOLD'), ("COMPLETED","COMPLETED"), ("SKIPPED","SKIPPED"), ("","")], blank=True)
-    #status_justification = models.CharField(null=True, blank=True)
-    energy_assessments = models.ManyToManyField(EnergyAssessment, blank=True)
-    #cash_flows = models.ForeignKey(CashFlow, on_delete=models.SET_NULL,  null=True, blank=True)
-    cash_flows = models.ManyToManyField(CashFlow, blank=True)
+  class Meta:
+    ordering = ['-date']
+  consumer = models.ForeignKey(Consumer, on_delete=models.CASCADE)
+  date = models.DateField(default=timezone.now)
+  raid = models.BooleanField(default=False)
+  internal = models.BooleanField(default=False)
+  #subject = models.CharField(max_length=50, null=True, blank= True, choices=[('theft','Theft'),('unrecharged','unrecharged'),('defaulted','defaulted'),])
+  remark = models.TextField(null=True, blank=True)
+  theft = models.BooleanField(default=False)
+  unused = models.BooleanField(default=False)
+  defaulter = models.BooleanField(default=False)
+  #meter_defective = models.BooleanField(default=False)
+  mark = models.BooleanField(default=False)
+  #meter_replaced = models.BooleanField(default=False)
+  disconnected = models.BooleanField(default=False)
+  #summoned = models.BooleanField(default=False)
+  status = models.CharField(max_length=20, default='--', choices=[(x,x) for x in ['--', 'OPEN', 'CLOSED']])
+  resolution = models.CharField(max_length=300, blank=True, null= True)
+  tags = TaggableManager(blank=True)
+  def __str__(self):
+      return f'{self.consumer} — {self.remark}'
+  energy_assessments = models.ManyToManyField(EnergyAssessment, blank=True)
+  cash_flows = models.ManyToManyField(CashFlow, blank=True)
 class Staff(models.Model):
   name = models.CharField(max_length=100)
   is_staff = models.BooleanField(default=True)
@@ -249,28 +252,42 @@ class UnauthConsumer(models.Model):
     def __str__(self):
         return f'{self.name}, {self.address}'
 class Raid(models.Model):
+    raid_groups = models.ManyToManyField('RaidGroup', blank=True, related_name='raid_groups', through='RaidGrouping')
     date = models.DateField(default=timezone.now)
     consumer = models.ForeignKey(Consumer, on_delete=models.SET_NULL, null=True, blank=True)
     unauth = models.ForeignKey(UnauthConsumer, on_delete=models.SET_NULL, null=True, blank=True)
-    observation = models.TextField(null=True, blank=True)
-    ok = models.BooleanField(default=False)
-    theft = models.BooleanField(default=False)
-    unauthorised = models.BooleanField(default=False)
-    unused = models.BooleanField(default=False)
-    underbilled = models.BooleanField(default=False)
-    image = models.ImageField(upload_to='images/', null=True, blank=True)
-    tags = TaggableManager(blank=True)
     info = models.TextField(null=True, blank=True)
-    is_disconnected = models.BooleanField(default=False)
-    penalty_paid = models.BooleanField(default=False)
+    observations = models.ManyToManyField('RaidObservation', blank=True)
+    comment = models.TextField(null=True, blank=True)
     action = models.CharField(max_length=200, null=True, blank=True)
-    is_closed = models.BooleanField(default=False)
+    remark = models.TextField(null=True, blank=True)
+    is_disconnected = models.BooleanField(default=False)
+    #penalty_paid = models.BooleanField(default=False)
+    #done = models.BooleanField(default=False)
     skip = models.BooleanField(default=False)
     energy_assessments = models.ManyToManyField(EnergyAssessment, blank=True)
     staffs_assignments = models.ForeignKey(StaffAssignment, on_delete=models.SET_NULL, null=True, blank=True)
-    cash_flows = models.ManyToManyField(CashFlow, blank=True)
+    staffs_engaged = models.ManyToManyField(Staff, blank=True)
+    raid_groups = models.ManyToManyField('RaidGroup', through='RaidGrouping')
+    #cash_flows = models.ManyToManyField(CashFlow, blank=True, related_name='raid_cash_flows')
+    def save(self, *args, **kwargs):
+      #rgs = RaidGroup.objects.filter(selected=True)
+      #for rg in rgs:
+      #  self.raid_groups.add(rg)
+      super().save(*args, **kwargs)
     def __str__(self):
-        return f'{self.unauth}' if self.consumer==None else f'{self.consumer}, {self.theft}, {self.is_disconnected}'
+      obs = ", ".join([x.text for x in self.observations.all()])
+      return f'{self.unauth}' if self.consumer==None else f'{self.consumer}, [{obs}], [{self.action}],{"disconnected" if self.is_disconnected else " "}'
+class RaidCashFlow(models.Model):
+  raid = models.ForeignKey(Raid, on_delete=models.SET_NULL, null=True)
+  cash_flow = models.ForeignKey(CashFlow, on_delete=models.CASCADE)
+class RaidObservation(models.Model):
+  #raid = models.ForeignKey(Raid, on_delete= models.SET_NULL)
+  text = models.CharField(max_length=30)
+  theft = models.BooleanField(default=False)
+  def __str__(self):
+    return f'{self.id} {self.text}'
+    
 class TemporaryConnection(models.Model):
     report_date = models.DateField(default=timezone.now)
     name = models.CharField(max_length=100)
@@ -298,8 +315,10 @@ class Todo(models.Model):
     content = models.TextField(max_length=255,null=False)
     status = models.CharField(max_length=10, default='PENDING', choices =[('PENDING','PENDING'),('DONE','DONE'),('HOLD','HOLD'),('SKIP','SKIP')])
     remark = models.TextField(max_length=200, blank=True, null=True)
-class Meter(models.Model):
+class DefectiveMeter(models.Model):
   consumer = models.ForeignKey(Consumer, on_delete=models.SET_NULL, null=True)
+  fetch = models.BooleanField(default=False)
+  meter_no = models.CharField(max_length=10, null=True, blank=True)
   record_date = models.DateField(default=timezone.now)
   picked_date = models.DateField(default=timezone.now, blank=True, null=True)
   picked_by = models.ManyToManyField(Staff, related_name='picked_by')
@@ -315,8 +334,38 @@ class Meter(models.Model):
   remark= models.CharField(max_length=100, blank=True, null=True)
   prioritized = models.BooleanField(default=False)
   is_resolved = models.BooleanField(default=False)
+  progress = models.ForeignKey('DefectiveMeterProgress', on_delete=models.SET_NULL, null=True, blank=True)
   def __str__(self):
     return ", ".join([str(self.consumer)])
+  def save(self, *args, **kwargs):
+    if(self.fetch):
+      self.meter_no = self.consumer.meter_no
+      super().save(*args, **kwargs)
+class DefectiveMeterProgress(models.Model):
+  defective_meter = models.ForeignKey(DefectiveMeter, on_delete=models.CASCADE)
+  progress = models.ForeignKey('Progress', on_delete=models.CASCADE, null=True)
+class Progress(models.Model):
+  date = models.DateField(default=timezone.now)
+  text = models.CharField(max_length=200)
+  add_todo = models.BooleanField(default=False)
+  def __str__(self):
+    return ": ".join([str(self.date), self.text])
+  def save(self, *args, **kwargs):
+    try:
+      todo = Todo.objects.get(content_type=ContentType.objects.get_for_model(self), object_id=self.pk)
+      if(self.add_todo):
+        todo.content = self.text
+        todo.save()
+      else:
+        todo.delete()
+    except Todo.DoesNotExist:
+      if(self.add_todo):
+        todo = Todo()
+        todo.content_type = ContentType.objects.get_for_model(Progress)
+        todo.object_id = self.id
+        todo.content = self.text
+        todo.save()
+    super().save(*args, **kwargs)
 class Complaint(models.Model):
   consumer = models.ForeignKey(Consumer, on_delete=models.SET_NULL, null=True)
   date= models.DateField(default=timezone.now)
@@ -346,9 +395,6 @@ class HistoryLog(models.Model):
   log = models.ForeignKey(Log, on_delete=models.CASCADE)
 
 from office.models import Work
-class HistoryWork(models.Model):
-  history = models.ForeignKey(ConsumerHistory, on_delete=models.CASCADE)
-  work = models.ForeignKey(Work, on_delete=models.CASCADE)
 
 class ConsumerWork(models.Model):
   consumer=models.ForeignKey(Consumer, on_delete=models.CASCADE)
@@ -357,7 +403,49 @@ class ConsumerWork(models.Model):
     return "•".join([str(self.consumer), str(self.work)])
     
 class RaidGroup(models.Model):
-  name = models.CharField(max_length=100)
-  raids = models.ManyToManyField(Raid, blank=True)
+  date = models.DateField(default=timezone.now)
+  name = models.CharField(max_length=50)
+  description = models.TextField(blank=True)
+  #raids = models.ManyToManyField(Raid, blank=True)
+  selected = models.BooleanField(default=False)
+  freezed = models.BooleanField(default=False)
+  #def save(self, *args, **kwargs):
+    
   def __str__(self):
     return ":".join([str(self.id), self.name])
+
+class RaidGrouping(models.Model):
+  raid = models.ForeignKey(Raid, on_delete=models.CASCADE, related_name='raidgroupings')
+  group = models.ForeignKey(RaidGroup, on_delete=models.CASCADE)
+  def __str__(self):
+    return "—".join([self.group.name, self.raid.consumer.name, str(self.raid.consumer.consumer_id), str(self.raid.observations)])
+  
+class MultiConsumer(models.Model):
+  #relationship_name = models.CharField(max_length=100)
+  consumer = models.ForeignKey(Consumer, on_delete=models.SET_NULL, null=True)
+  #consumers = models.ManyToManyField(Consumer, blank=True, related_name='close_consumers')
+  consumer_b = models.ForeignKey(Consumer, on_delete=models.CASCADE, null=True, related_name='consumer_b')
+  dup_is_b = models.BooleanField(default=False)
+  duplication = models.BooleanField(default=False)
+  mark_both = models.BooleanField(default=False)
+  revise_bill = models.BooleanField(default=False)
+  verified = models.BooleanField('Different connections',default= False)
+  remark = models.CharField(max_length=100, null=True, blank=True)
+  status = models.CharField(max_length=50, null=True, blank=True)
+  mark = models.BooleanField(default=False)
+  def __str__(self):
+    return str(self.consumer)
+
+class ConsumerNA(models.Model):
+  consumer_id = models.IntegerField(primary_key=True)
+  name = models.CharField(max_length=50, null=True, blank=True)
+  address = models.CharField(max_length=100, null=True, blank=True)
+  contacts = models.CharField(max_length=50, null=True, blank=True)
+  subdivision = models.CharField(max_length=50, null=True, blank=True)
+  info = models.TextField(null=True, blank=True)
+  remark = models.TextField(null=True, blank=True)
+  tags = TaggableManager(blank=True)
+
+class DefectiveMeterCashFlow(models.Model):
+  defective_meter = models.OneToOneField(DefectiveMeter, on_delete=models.CASCADE)
+  cash_flows = models.ForeignKey(CashFlow, on_delete=models.CASCADE)

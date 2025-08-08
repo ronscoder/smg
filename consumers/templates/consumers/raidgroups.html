@@ -1,0 +1,18 @@
+{% extends 'office/base.html' %}
+
+{% block content %}
+{% for rg in raidgroups %}
+<div class="border p-2">
+  {{rg.name}}: {{rg.description}}
+  <div>
+    <a href="{% url 'download_raidgroup' rgid=rg.id %}" class="underline inline-block">
+      download
+    </a>
+  <a href="{% url 'raidgroupings' rgid=rg.id %}" class="underline inline-block">
+  view
+  </a>
+  </div>
+</div>
+{% endfor %}
+
+{% endblock %}

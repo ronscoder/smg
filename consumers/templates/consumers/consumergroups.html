@@ -1,0 +1,22 @@
+{% extends "office/base.html" %}
+{% block content %}
+<h2 clasa="heading">Consumer groups</h2>
+<table class="">
+{% for cg in groups|dictsort:'group_name' %}
+<tr>
+<td class="text-wrap">
+{{cg.group_name}} 
+</td>
+<td class="text-wrap">{{cg.group_code}}</td>
+<td class="{% if not cg.status == None %} bg-orange-200 {% else %} {% endif %}">
+<strong>{{cg.status}}
+</strong>
+</td>
+  <td>
+ <a href="{% url 'download_consumergroup' cg.id %}" class="inline-block underline my-1">download</a>
+ <a href="{% url 'consumergroup' cg.id %}" class="inline-block underline">view</a>
+  </td>
+ </tr>
+{% endfor %}
+</table>
+{% endblock %}

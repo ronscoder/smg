@@ -1,0 +1,13 @@
+{% extends 'office/base.html' %}
+{% block content %}
+<div>{{rg.name}}</div>
+<div>
+  <div>
+    No. of raids: {{ rs|length }}
+  </div>
+  {% for r in rs %}
+  <a href="{% url 'raid' rid=r.id %}" style="display:block; border: 1px solid pink">{{ r }}</a>
+  {% endfor %}
+</div>
+
+{% endblock %}

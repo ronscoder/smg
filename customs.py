@@ -70,14 +70,15 @@ def add_consumers():
 
 def update_fields():
    # file = input('filename ')
-    df = pd.read_excel('cdata.xls')
+    df = pd.read_excel('ignores/cdata.xls')
     for i,row in df.iterrows():
-       # print(i)
+        print(i)
         c = Consumer.objects.get(consumer_id=row['CONSUMER ID'])
         #c.meter_no = row['METER NO']
         #c.connection_id = row['Prepaid Conn no']
         #c.contact_nos = row['MOBILE'] if pd.notna(row['MOBILE']) else ""
-        c.connection_type = row['CONNECTION TYPE']
+        #c.load_kw = row['CONNECTED LOAD']
+        c.connection_status = row['CONSUMER STATUS']
         #c.bill_upto = row['BILL END']
         try: 
           c.save()
