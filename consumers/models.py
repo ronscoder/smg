@@ -385,7 +385,7 @@ class WorkProgress(models.Model):
 class ConsumerWork(models.Model):
   consumer=models.ForeignKey(Consumer, on_delete=models.CASCADE)
   #work=models.ForeignKey(Work, on_delete=models.CASCADE)
-  work2=models.ForeignKey(Work2, on_delete=models.CASCADE, null=True)
+  work=models.ForeignKey(Work2, on_delete=models.CASCADE, null=True)
   def __str__(self):
     return "•".join([str(self.consumer), str(self.work)])
     
