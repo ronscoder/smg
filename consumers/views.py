@@ -203,16 +203,4 @@ def download_duplicates(request):
 from consumers.models import ConsumerWork, Work2
 def fix_db_changes(request):
   # this is a changing code... dont use again
-  cws = ConsumerWork.objects.all()
-  for cw in cws:
-    w2 = Work2()
-    w2.date = cw.work.date
-    w2.subject = cw.work.subject
-    w2.info = cw.work.info
-    w2.deadline = cw.work.deadline
-    w2.priority = cw.work.priority
-    w2.status = cw.work.status
-    w2.save()
-    cw.work2 = w2
-    cw.save()
-  return HttpResponse(request, "Done")
+  return HttpResponse("Done")

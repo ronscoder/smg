@@ -380,11 +380,11 @@ class WorkProgress(models.Model):
     return "•".join([str(self.work)])
   
   
-from office.models import Work
+#from office.models import Work
 
 class ConsumerWork(models.Model):
   consumer=models.ForeignKey(Consumer, on_delete=models.CASCADE)
-  work=models.ForeignKey(Work, on_delete=models.CASCADE)
+  #work=models.ForeignKey(Work, on_delete=models.CASCADE)
   work2=models.ForeignKey(Work2, on_delete=models.CASCADE, null=True)
   def __str__(self):
     return "•".join([str(self.consumer), str(self.work)])

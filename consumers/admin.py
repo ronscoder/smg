@@ -60,8 +60,8 @@ class ConsumerInfoInline(admin.TabularInline):
   extra = 0
 class ConsumerWorkAdmin(admin.ModelAdmin):
   autocomplete_fields = ['consumer']
-  list_display = ['consumer', 'work', 'work__status', 'work2']
-  list_filter = ['work__status']
+  list_display = ['consumer', 'work2']
+  #list_filter = []
 class ConsumerWorkInline(admin.StackedInline):
   model = ConsumerWork
   extra = 0
