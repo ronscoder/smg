@@ -4,6 +4,11 @@ from django.utils import timezone
 #from anchor.models.fields import SingleAttachmentField
 from location_field.models.plain import PlainLocationField
 from taggit.managers import TaggableManager
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from dateutil.rrule import rrule, MONTHLY
+import calendar
+from dateutil.relativedelta import relativedelta
 
 class State(models.Model):
   name = models.CharField(max_length=20)
@@ -84,9 +89,6 @@ class Tariff(models.Model):
   def __str__(self):
     return f'{self.billing_class} {self.category} {self.year}'
     
-from dateutil.rrule import rrule, MONTHLY
-import calendar
-from dateutil.relativedelta import relativedelta
 class EnergyAssessment(models.Model):
   title = models.CharField(max_length=50, null=True, blank=True)
   load_surveys = models.ManyToManyField('LoadSurvey', blank=True)
@@ -203,20 +205,8 @@ class ConsumerHistory(models.Model):
     ordering = ['-date']
   consumer = models.ForeignKey(Consumer, on_delete=models.CASCADE)
   date = models.DateField(default=timezone.now)
-  raid = models.BooleanField(default=False)
-  internal = models.BooleanField(default=False)
-  #subject = models.CharField(max_length=50, null=True, blank= True, choices=[('theft','Theft'),('unrecharged','unrecharged'),('defaulted','defaulted'),])
   remark = models.TextField(null=True, blank=True)
-  theft = models.BooleanField(default=False)
-  unused = models.BooleanField(default=False)
-  defaulter = models.BooleanField(default=False)
-  #meter_defective = models.BooleanField(default=False)
   mark = models.BooleanField(default=False)
-  #meter_replaced = models.BooleanField(default=False)
-  disconnected = models.BooleanField(default=False)
-  #summoned = models.BooleanField(default=False)
-  status = models.CharField(max_length=20, default='--', choices=[(x,x) for x in ['--', 'OPEN', 'CLOSED']])
-  resolution = models.CharField(max_length=300, blank=True, null= True)
   tags = TaggableManager(blank=True)
   def __str__(self):
       return f'{self.consumer} — {self.remark}'
@@ -262,18 +252,12 @@ class Raid(models.Model):
     action = models.CharField(max_length=200, null=True, blank=True)
     remark = models.TextField(null=True, blank=True)
     is_disconnected = models.BooleanField(default=False)
-    #penalty_paid = models.BooleanField(default=False)
-    #done = models.BooleanField(default=False)
     skip = models.BooleanField(default=False)
     energy_assessments = models.ManyToManyField(EnergyAssessment, blank=True)
     staffs_assignments = models.ForeignKey(StaffAssignment, on_delete=models.SET_NULL, null=True, blank=True)
     staffs_engaged = models.ManyToManyField(Staff, blank=True)
     raid_groups = models.ManyToManyField('RaidGroup', through='RaidGrouping')
-    #cash_flows = models.ManyToManyField(CashFlow, blank=True, related_name='raid_cash_flows')
     def save(self, *args, **kwargs):
-      #rgs = RaidGroup.objects.filter(selected=True)
-      #for rg in rgs:
-      #  self.raid_groups.add(rg)
       super().save(*args, **kwargs)
     def __str__(self):
       obs = ", ".join([x.text for x in self.observations.all()])
@@ -305,9 +289,7 @@ class TemporaryConnection(models.Model):
     cash_flows = models.ManyToManyField(CashFlow, blank=True)
     def __str__(self):
         return f'{self.name}, {self.address}'
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
-# Create your models here.
+
 class Todo(models.Model):
     content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True)
     object_id = models.PositiveIntegerField()
@@ -349,25 +331,11 @@ class DefectiveMeterProgress(models.Model):
 class Progress(models.Model):
   date = models.DateField(default=timezone.now)
   text = models.CharField(max_length=200)
-  add_todo = models.BooleanField(default=False)
+  status = models.CharField(max_length=50, choices=[('DONE','DONE'),('PENDING','PENDING'), ('ONGOING','ONGOING'),('FAILED','FAILED'),('--','--')], default='--')
+  status_text = models.CharField(max_length=200, null=True, blank=True)
   def __str__(self):
-    return ": ".join([str(self.date), self.text])
-  def save(self, *args, **kwargs):
-    try:
-      todo = Todo.objects.get(content_type=ContentType.objects.get_for_model(self), object_id=self.pk)
-      if(self.add_todo):
-        todo.content = self.text
-        todo.save()
-      else:
-        todo.delete()
-    except Todo.DoesNotExist:
-      if(self.add_todo):
-        todo = Todo()
-        todo.content_type = ContentType.objects.get_for_model(Progress)
-        todo.object_id = self.id
-        todo.content = self.text
-        todo.save()
-    super().save(*args, **kwargs)
+    return " | ".join([str(self.date),self.status, self.text])
+    
 class Complaint(models.Model):
   consumer = models.ForeignKey(Consumer, on_delete=models.SET_NULL, null=True)
   date= models.DateField(default=timezone.now)
@@ -380,12 +348,13 @@ class Complaint(models.Model):
   def __str__(self):
     return ", ".join([str(self.consumer), self.complaint, str(self.is_resolved)])
 class Log(models.Model):
-  awaiting = models.BooleanField(default=False)
+  #awaiting = models.BooleanField(default=False)
   date = models.DateField(default=timezone.now)
   text1 = models.CharField(max_length=100)
   text2= models.CharField(max_length=100, blank=True, null=True)
+  status = models.CharField(max_length=20, blank=True, null=True)
   def __str__(self):
-    return ", ".join([self.text1, str(self.date),])
+    return ", ".join([self.text1, str(self.text2), str(self.date),])
 
 class ComplaintLog(models.Model):
   complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE)
@@ -395,12 +364,28 @@ class ComplaintLog(models.Model):
 class HistoryLog(models.Model):
   history = models.ForeignKey(ConsumerHistory, on_delete=models.CASCADE)
   log = models.ForeignKey(Log, on_delete=models.CASCADE)
-
+class Work2(models.Model):
+  date= models.DateField(default=timezone.now)
+  subject = models.TextField()
+  info = models.TextField(null=True, blank=True)
+  deadline = models.DateField(blank=True, null=True)
+  priority = models.CharField(max_length=20, default="LOW", choices= [(x,x) for x in ['LOW', 'MEDIUM', 'HIGH']])
+  status = models.CharField(max_length=50, choices=[('DONE','DONE'),('PENDING','PENDING'),('ONGOING','ONGOING'), ('FAILED','FAILED')], default='PENDING')
+  def __str__(self):
+    return " | ".join([self.priority, self.status, self.subject])
+class WorkProgress(models.Model):
+  work = models.ForeignKey(Work2, on_delete=models.CASCADE)
+  progress = models.ForeignKey(Progress, on_delete=models.CASCADE)
+  def __str__(self):
+    return "•".join([str(self.work)])
+  
+  
 from office.models import Work
 
 class ConsumerWork(models.Model):
   consumer=models.ForeignKey(Consumer, on_delete=models.CASCADE)
   work=models.ForeignKey(Work, on_delete=models.CASCADE)
+  work2=models.ForeignKey(Work2, on_delete=models.CASCADE, null=True)
   def __str__(self):
     return "•".join([str(self.consumer), str(self.work)])
     
@@ -421,6 +406,10 @@ class RaidGrouping(models.Model):
   group = models.ForeignKey(RaidGroup, on_delete=models.CASCADE)
   def __str__(self):
     return "—".join([self.group.name, self.raid.consumer.name, str(self.raid.consumer.consumer_id), str(self.raid.observations)])
+
+class RaidProgress(models.Model):
+  raid = models.ForeignKey(Raid, on_delete=models.CASCADE, related_name='raid_progress')
+  progress = models.ForeignKey(Progress, on_delete=models.CASCADE)
   
 class MultiConsumer(models.Model):
   #relationship_name = models.CharField(max_length=100)

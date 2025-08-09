@@ -21,5 +21,5 @@ urlpatterns = [
       
         path("<int:consumer_id>/", views.consumer_details, name="consumer_details"),
         path("test_api/", views.test_api),
-      #  path("up")
+        path("fix_db_changes", views.fix_db_changes, name='fix_db_changes'),
         ]

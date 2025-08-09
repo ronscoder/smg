@@ -2,7 +2,7 @@ from django.contrib import admin
 admin.site.index_title = ""
 admin.site.site_header = "SGM OFFICE ADMIN" 
 admin.site.site_title = "SGM ADMIN"
-from .models import Consumer, ConsumerHistory, UnauthConsumer, Raid, CashFlow, SolarConsumer, EnergyAssessment, LoadSurvey, ConsumerInfo, Staff, StaffAssignment, ConsumerGroup, Tariff, TemporaryConnection, Todo, DefectiveMeter, Complaint, Log,ComplaintLog, HistoryLog, ConsumerWork, RaidGroup, MultiConsumer, RaidGrouping, ConsumerGrouping, ConsumerNA, RaidObservation, State, Progress, RaidCashFlow, DefectiveMeterCashFlow
+from .models import Consumer, ConsumerHistory, UnauthConsumer, Raid, CashFlow, SolarConsumer, EnergyAssessment, LoadSurvey, ConsumerInfo, Staff, StaffAssignment, ConsumerGroup, Tariff, TemporaryConnection, Todo, DefectiveMeter, Complaint, Log,ComplaintLog, HistoryLog, ConsumerWork, RaidGroup, MultiConsumer, RaidGrouping, ConsumerGrouping, ConsumerNA, RaidObservation, State, Progress, RaidCashFlow, DefectiveMeterCashFlow, RaidProgress
 from nested_admin import NestedModelAdmin, NestedStackedInline, NestedTabularInline
 from django_admin_multi_select_filter.filters import MultiSelectFieldListFilter as mfilter, MultiSelectRelatedFieldListFilter as msrf
 from more_admin_filters import MultiSelectFilter as MSF
@@ -29,6 +29,9 @@ class CashFlowInline(admin.TabularInline):
 class ConsumerHistoryInline(admin.StackedInline):
     model = ConsumerHistory
     extra = 0
+class HistoryLogAdmin(admin.ModelAdmin):
+  list_display = ['history', 'log', 'log__status']
+#admin.site.register(HistoryLog, HistoryLogAdmin)
 class HistoryLogInline(admin.StackedInline):
   model = HistoryLog
   extra = 0
@@ -41,6 +44,7 @@ class ConsumerHistoryAdmin(admin.ModelAdmin):
   list_filter = [('tags__name', MSF),]
   list_per_page = 10
   exclude = ['cash_flows']
+  list_display = ['__str__',]
 class SolarConsumerInline(admin.StackedInline):
   model = SolarConsumer
   extra = 0
@@ -56,7 +60,7 @@ class ConsumerInfoInline(admin.TabularInline):
   extra = 0
 class ConsumerWorkAdmin(admin.ModelAdmin):
   autocomplete_fields = ['consumer']
-  list_display = ['consumer', 'work', 'work__status']
+  list_display = ['consumer', 'work', 'work__status', 'work2']
   list_filter = ['work__status']
 class ConsumerWorkInline(admin.StackedInline):
   model = ConsumerWork
@@ -96,6 +100,10 @@ class RaidCashflowInline(admin.StackedInline):
 class RaidGroupInline(admin.TabularInline):
   model = RaidGrouping
   extra = 0
+class RaidProgressInline(admin.TabularInline):
+  model = RaidProgress
+  extra = 0
+
 class RaidAdmin(admin.ModelAdmin):
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
     print('field name', db_field.name)
@@ -112,7 +120,7 @@ class RaidAdmin(admin.ModelAdmin):
       print(kwargs)
     return super().formfield_for_manytomany(db_field, request, **kwargs)
   search_fields = ['consumer__consumer_id', 'consumer__name', 'consumer__meter_no', 'consumer__address']
-  inlines = [RaidEnergyAssessmentInline,RaidCashflowInline, RaidGroupInline] #RaidGroupInline] #CashFlowInline, ]
+  inlines = [RaidProgressInline, RaidEnergyAssessmentInline,RaidCashflowInline, RaidGroupInline] #RaidGroupInline] #CashFlowInline, ]
   list_filter = ['raid_groups','date', 'is_disconnected', 'action', 'observations']
   date_hierarchy = 'date'
   exclude = ['energy_assessments']
