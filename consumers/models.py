@@ -319,14 +319,16 @@ class DefectiveMeter(models.Model):
   consumer = models.ForeignKey(Consumer, on_delete=models.SET_NULL, null=True)
   fetch = models.BooleanField(default=False)
   meter_no = models.CharField(max_length=10, null=True, blank=True)
+  contact_nos = models.CharField(max_length=100, blank=True, null=True)
   record_date = models.DateField(default=timezone.now)
   picked_date = models.DateField(default=timezone.now, blank=True, null=True)
   picked_by = models.ManyToManyField(Staff, related_name='picked_by')
   reason = models.CharField(max_length=100)
   custody = models.ManyToManyField(Staff, related_name='custody')
+  #custodyx = models.CharField(max_length=50, null=True, blank=True)
   balance = models.FloatField(default=0)
   postpaid = models.BooleanField(default=False)
-  new_meter = models.CharField(max_length=10, blank=True, null=True)
+  new_meter_no = models.CharField(max_length=10, blank=True, null=True)
   action_text = models.CharField(max_length=100, blank=True, null=True)
   action_date = models.DateField(blank=True, null=True)
   installed_by = models.ManyToManyField(Staff, related_name='installed_by', blank=True)
@@ -340,7 +342,7 @@ class DefectiveMeter(models.Model):
   def save(self, *args, **kwargs):
     if(self.fetch):
       self.meter_no = self.consumer.meter_no
-      super().save(*args, **kwargs)
+    super().save(*args, **kwargs)
 class DefectiveMeterProgress(models.Model):
   defective_meter = models.ForeignKey(DefectiveMeter, on_delete=models.CASCADE)
   progress = models.ForeignKey('Progress', on_delete=models.CASCADE, null=True)

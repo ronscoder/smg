@@ -1,11 +1,65 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.core import serializers
-from .models import Consumer, RaidGroup, RaidGrouping, Raid, ConsumerGroup, ConsumerGrouping, MultiConsumer, RaidCashFlow
-
+from .models import Consumer, RaidGroup, RaidGrouping, Raid, ConsumerGroup, ConsumerGrouping, MultiConsumer, RaidCashFlow, DefectiveMeter
 from django.http import FileResponse
 import pandas as pd
 from django_pandas.io import read_frame
+from .forms import upload_defectives_form
+
+def add_defective(r):
+  meter_no = r['meter_no']
+  dms = DefectiveMeter.objects.filter(meter_no=meter_no)
+  if(dms):
+    return f"{meter_no} already added"
+  else:
+    c = Consumer.objects.filter(meter_no=meter_no).first()
+    if(not c):
+      return f'{meter_no} unmigrated'
+  
+    try: 
+      dm = DefectiveMeter()
+      dm.meter_no = meter_no
+      dm.consumer = c
+      dm.record_date = r['record_date']
+      dm.picked_date = r['picked_date']
+      #dm.picked_by = r['picked_by']
+      dm.reason = r['reason']
+      #dm.reason = r['reason']
+      #dm.custody = Staff.objects.get(name='Ronjan')
+      #dm.custodyx = r['']
+      dm.new_meter_no = r['new_meter_no']
+      dm.remark = f"{r['status']} - {r['picked_by']}, {r['custody']}"
+      dm.save()
+      return f'{meter_no} added'
+    except Exception as ex:
+      return f'{meter_no} failed'
+    
+def uploaded(request):
+  return render(request, 'consumers/uploaded.html')
+def uploads(request):
+  if(request.method == 'POST'):
+    form = upload_defectives_form(request.POST, request.FILES)
+    if(form.is_valid()):
+      print('form is valid')
+      print(form)
+      file = request.FILES['file']
+      if not file.name.endswith('.xlsx'):
+        return render(request, 'consumers/uploads.html', {'form': form, 'error': 'Please upload a xlxs file.'})
+      df = pd.read_excel(file)
+      #print(df.head())
+      ress = []
+      for i, r in df.iterrows():
+        res = add_defective(r)
+        ress.append(res)
+      #return redirect('uploaded')
+      return render(request, 'consumers/uploaded.html', {'res': ress})
+    else:
+      return render(request, 'consumers/uploads.html', {'form': form})
+  else:
+    form = upload_defectives_form()
+  return render(request, 'consumers/uploads.html', {'form': form})
+  
 def index(request):
     return render(request, "consumers/index.html")
 def test_api(request):

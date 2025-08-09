@@ -1,0 +1,16 @@
+{% extends 'office/base.html' %}
+
+{% block content %}
+<h1>Uploads</h1>
+<div>
+  <h2>upload defective meters</h2>
+    <form method="post" enctype="multipart/form-data" class="border">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="border">Upload defectives excel</button>
+    </form>
+    {% if error %}
+        <p class="text-red-500">{{ error }}</p>
+    {% endif %}
+</div>
+{% endblock %}

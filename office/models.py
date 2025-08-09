@@ -16,7 +16,7 @@ class Work(models.Model):
   subject = models.TextField()
   info = models.TextField(null=True, blank=True)
   deadline = models.DateField(blank=True, null=True)
-  priority = models.CharField(default="LOW", choices= [(x,x) for x in ['LOW', 'MEDIUM', 'HIGH']])
+  priority = models.CharField(max_length=20, default="LOW", choices= [(x,x) for x in ['LOW', 'MEDIUM', 'HIGH']])
   status = models.CharField(max_length=50, choices=[('DONE','DONE'),('PENDING','PENDING'),('ONGOING','ONGOING'), ('FAILED','FAILED')], default='PENDING')
   def __str__(self):
     return " | ".join([self.priority, self.status, self.subject])

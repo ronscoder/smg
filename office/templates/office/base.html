@@ -27,8 +27,11 @@
     <a href="{% url 'duplicacy_report' %}" class="text-purple-600 p-2">
       Duplicacy Report
     </a>
+    <a href="{% url 'uploads' %}" class="text-purple-600 p-2">
+      Uploads
+    </a>
   </div>
-  <div class="border my-4">
+  <div class="border mt-1">
     <div class="p-2">
     <a href="{% url 'projects_status' %}">
       Project status
@@ -39,7 +42,7 @@
 </div>  
 
   </div>
-    <div id='content' class="p-4">
+    <div id='content' class="mx-2">
         {% block content %}
         {% endblock %}
     </div>
