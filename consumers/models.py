@@ -364,7 +364,7 @@ class ComplaintLog(models.Model):
 class HistoryLog(models.Model):
   history = models.ForeignKey(ConsumerHistory, on_delete=models.CASCADE)
   log = models.ForeignKey(Log, on_delete=models.CASCADE)
-class Work2(models.Model):
+class Work(models.Model):
   date= models.DateField(default=timezone.now)
   subject = models.TextField()
   info = models.TextField(null=True, blank=True)
@@ -374,18 +374,14 @@ class Work2(models.Model):
   def __str__(self):
     return " | ".join([self.priority, self.status, self.subject])
 class WorkProgress(models.Model):
-  work = models.ForeignKey(Work2, on_delete=models.CASCADE)
+  work = models.ForeignKey(Work, on_delete=models.CASCADE)
   progress = models.ForeignKey(Progress, on_delete=models.CASCADE)
   def __str__(self):
     return "•".join([str(self.work)])
-  
-  
-#from office.models import Work
 
 class ConsumerWork(models.Model):
   consumer=models.ForeignKey(Consumer, on_delete=models.CASCADE)
-  #work=models.ForeignKey(Work, on_delete=models.CASCADE)
-  work=models.ForeignKey(Work2, on_delete=models.CASCADE, null=True)
+  work=models.ForeignKey(Work, on_delete=models.CASCADE, null=True)
   def __str__(self):
     return "•".join([str(self.consumer), str(self.work)])
     

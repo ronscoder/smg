@@ -200,7 +200,7 @@ def download_duplicates(request):
   df.to_csv(response, index=False)
   return response
 
-from consumers.models import ConsumerWork, Work2
+#from consumers.models import ConsumerWork, Work2
 def fix_db_changes(request):
   # this is a changing code... dont use again
   return HttpResponse("Done")

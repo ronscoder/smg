@@ -2,7 +2,7 @@ from django.contrib import admin
 admin.site.index_title = ""
 admin.site.site_header = "SGM OFFICE ADMIN" 
 admin.site.site_title = "SGM ADMIN"
-from .models import Consumer, ConsumerHistory, UnauthConsumer, Raid, CashFlow, SolarConsumer, EnergyAssessment, LoadSurvey, ConsumerInfo, Staff, StaffAssignment, ConsumerGroup, Tariff, TemporaryConnection, Todo, DefectiveMeter, Complaint, Log,ComplaintLog, HistoryLog, ConsumerWork, RaidGroup, MultiConsumer, RaidGrouping, ConsumerGrouping, ConsumerNA, RaidObservation, State, Progress, RaidCashFlow, DefectiveMeterCashFlow, RaidProgress
+from .models import Consumer, ConsumerHistory, UnauthConsumer, Raid, CashFlow, SolarConsumer, EnergyAssessment, LoadSurvey, ConsumerInfo, Staff, StaffAssignment, ConsumerGroup, Tariff, TemporaryConnection, Todo, DefectiveMeter, Complaint, Log,ComplaintLog, HistoryLog,Work, ConsumerWork, RaidGroup, MultiConsumer, RaidGrouping, ConsumerGrouping, ConsumerNA, RaidObservation, State, Progress, RaidCashFlow, DefectiveMeterCashFlow, RaidProgress
 from nested_admin import NestedModelAdmin, NestedStackedInline, NestedTabularInline
 from django_admin_multi_select_filter.filters import MultiSelectFieldListFilter as mfilter, MultiSelectRelatedFieldListFilter as msrf
 from more_admin_filters import MultiSelectFilter as MSF
@@ -58,6 +58,9 @@ class RaidInline(admin.StackedInline):
 class ConsumerInfoInline(admin.TabularInline):
   model = ConsumerInfo.consumers.through
   extra = 0
+class WorkAdmin(admin.ModelAdmin):
+  list_display = ['status', 'subject', 'deadline', 'priority']
+  list_filter = ['status', 'priority', 'deadline']
 class ConsumerWorkAdmin(admin.ModelAdmin):
   autocomplete_fields = ['consumer']
   list_display = ['work__status','work','consumer']
