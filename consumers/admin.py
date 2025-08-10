@@ -2,7 +2,7 @@ from django.contrib import admin
 admin.site.index_title = ""
 admin.site.site_header = "SGM OFFICE ADMIN" 
 admin.site.site_title = "SGM ADMIN"
-from .models import Consumer, ConsumerHistory, UnauthConsumer, Raid, CashFlow, SolarConsumer, EnergyAssessment, LoadSurvey, ConsumerInfo, Staff, StaffAssignment, ConsumerGroup, Tariff, TemporaryConnection, Todo, DefectiveMeter, Complaint, Log,ComplaintLog, HistoryLog,Work, ConsumerWork, RaidGroup, MultiConsumer, RaidGrouping, ConsumerGrouping, ConsumerNA, RaidObservation, State, Progress, WorkProgress, RaidCashFlow, DefectiveMeterCashFlow, RaidProgress
+from .models import Consumer, ConsumerHistory, UnauthConsumer, Raid, CashFlow, SolarConsumer, EnergyAssessment, LoadSurvey, ConsumerInfo, Staff, StaffAssignment, ConsumerGroup, Tariff, TemporaryConnection, Todo, DefectiveMeter,DefectiveMeterProgress, Complaint, Log,ComplaintLog, HistoryLog,Work, ConsumerWork, RaidGroup, MultiConsumer, RaidGrouping, ConsumerGrouping, ConsumerNA, RaidObservation, State, Progress, WorkProgress, RaidCashFlow, DefectiveMeterCashFlow, RaidProgress, UnmigratedMeter
 from nested_admin import NestedModelAdmin, NestedStackedInline, NestedTabularInline
 from django_admin_multi_select_filter.filters import MultiSelectFieldListFilter as mfilter, MultiSelectRelatedFieldListFilter as msrf
 from more_admin_filters import MultiSelectFilter as MSF
@@ -165,11 +165,18 @@ class CashFlowAdmin(admin.ModelAdmin):
 
 class UnauthConsumerAdmin(admin.ModelAdmin):
   inlines = [RaidInline]
-  
+class DefectiveMeterProgressAdmin(admin.ModelAdmin):
+  pass
+admin.site.register(DefectiveMeterProgress, DefectiveMeterProgressAdmin)
+class DefectiveMeterProgressInline(admin.StackedInline):
+  model = DefectiveMeterProgress
+  extra = 0
 class DefectiveMeterAdmin(admin.ModelAdmin):
+  inlines = [DefectiveMeterProgressInline]
   autocomplete_fields = ['consumer']
   list_filter = ['prioritized', ]
   search_fields = ['meter_no', 'consumer__name']
+  list_display = ['meter_no','consumer__name','changed_to_postpaid', 'new_meter_no','action_text','is_resolved']
 admin.site.register(DefectiveMeter, DefectiveMeterAdmin)
 
 admin.site.register(Consumer, ConsumerAdmin)
@@ -235,3 +242,8 @@ class DefectiveMeterCashFlowAdmin(admin.ModelAdmin):
   autocomplete_fields = ['defective_meter']
   
 admin.site.register(DefectiveMeterCashFlow, DefectiveMeterCashFlowAdmin)
+
+class UnmigratedMeterAdmin(admin.ModelAdmin):
+  list_display = ['meter_no', 'name', 'status', 'info', 'consumer_id']
+  list_filter = ['status']
+admin.site.register(UnmigratedMeter, UnmigratedMeterAdmin)

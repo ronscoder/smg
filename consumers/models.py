@@ -258,7 +258,13 @@ class Raid(models.Model):
     staffs_engaged = models.ManyToManyField(Staff, blank=True)
     raid_groups = models.ManyToManyField('RaidGroup', through='RaidGrouping')
     def save(self, *args, **kwargs):
+      adding = self._state.adding == True
       super().save(*args, **kwargs)
+      if(adding):
+        selrgs = RaidGroup.objects.filter(selected=True)
+        for rg in selrgs:
+          RaidGrouping.objects.get_or_create(raid=self, group=rg)
+        #super().save(*args, **kwargs)
     def __str__(self):
       obs = ", ".join([x.text for x in self.observations.all()])
       return f'{self.unauth}' if self.consumer==None else f'{self.consumer}, [{obs}], [{self.action}],{"disconnected" if self.is_disconnected else " "}'
@@ -299,7 +305,7 @@ class Todo(models.Model):
     remark = models.TextField(max_length=200, blank=True, null=True)
 class DefectiveMeter(models.Model):
   consumer = models.ForeignKey(Consumer, on_delete=models.SET_NULL, null=True)
-  fetch = models.BooleanField(default=False)
+  #fetch = models.BooleanField(default=False)
   meter_no = models.CharField(max_length=10, null=True, blank=True)
   contact_nos = models.CharField(max_length=100, blank=True, null=True)
   record_date = models.DateField(default=timezone.now)
@@ -309,7 +315,7 @@ class DefectiveMeter(models.Model):
   custody = models.ManyToManyField(Staff, related_name='custody')
   #custodyx = models.CharField(max_length=50, null=True, blank=True)
   balance = models.FloatField(default=0)
-  postpaid = models.BooleanField(default=False)
+  changed_to_postpaid = models.BooleanField(default=False)
   new_meter_no = models.CharField(max_length=10, blank=True, null=True)
   action_text = models.CharField(max_length=100, blank=True, null=True)
   action_date = models.DateField(blank=True, null=True)
@@ -318,12 +324,12 @@ class DefectiveMeter(models.Model):
   remark= models.CharField(max_length=100, blank=True, null=True)
   prioritized = models.BooleanField(default=False)
   is_resolved = models.BooleanField(default=False)
-  progress = models.ForeignKey('DefectiveMeterProgress', on_delete=models.SET_NULL, null=True, blank=True)
+  progress = models.ManyToManyField('Progress', blank=True, through='DefectiveMeterProgress')
   def __str__(self):
     return ", ".join([str(self.consumer)])
   def save(self, *args, **kwargs):
-    if(self.fetch):
-      self.meter_no = self.consumer.meter_no
+    #if(self.fetch):
+      #self.meter_no = self.consumer.meter_no
     super().save(*args, **kwargs)
 class DefectiveMeterProgress(models.Model):
   defective_meter = models.ForeignKey(DefectiveMeter, on_delete=models.CASCADE)
@@ -436,3 +442,17 @@ class ConsumerNA(models.Model):
 class DefectiveMeterCashFlow(models.Model):
   defective_meter = models.OneToOneField(DefectiveMeter, on_delete=models.CASCADE)
   cash_flows = models.ForeignKey(CashFlow, on_delete=models.CASCADE)
+  
+class UnmigratedMeter(models.Model):
+  meter_no = models.CharField(max_length=20)
+  connection_id = models.CharField(max_length=50, blank=True, null=True)
+  name = models.CharField(max_length=50, blank=True, null=True)
+  address = models.CharField(max_length=50, blank=True, null=True)
+  contacts = models.CharField(max_length=50, blank=True, null=True)
+  info = models.TextField(blank=True)
+  status = models.CharField(max_length=50, blank=True, null=True)
+  remark = models.TextField(blank=True)
+  consumer_id = models.IntegerField(blank=True, null=True)
+  
+  
+  
