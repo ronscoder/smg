@@ -2,7 +2,7 @@ from django.contrib import admin
 admin.site.index_title = ""
 admin.site.site_header = "SGM OFFICE ADMIN" 
 admin.site.site_title = "SGM ADMIN"
-from .models import Consumer, ConsumerHistory, UnauthConsumer, Raid, CashFlow, SolarConsumer, EnergyAssessment, LoadSurvey, ConsumerInfo, Staff, StaffAssignment, ConsumerGroup, Tariff, TemporaryConnection, Todo, DefectiveMeter, Complaint, Log,ComplaintLog, HistoryLog,Work, ConsumerWork, RaidGroup, MultiConsumer, RaidGrouping, ConsumerGrouping, ConsumerNA, RaidObservation, State, Progress, RaidCashFlow, DefectiveMeterCashFlow, RaidProgress
+from .models import Consumer, ConsumerHistory, UnauthConsumer, Raid, CashFlow, SolarConsumer, EnergyAssessment, LoadSurvey, ConsumerInfo, Staff, StaffAssignment, ConsumerGroup, Tariff, TemporaryConnection, Todo, DefectiveMeter, Complaint, Log,ComplaintLog, HistoryLog,Work, ConsumerWork, RaidGroup, MultiConsumer, RaidGrouping, ConsumerGrouping, ConsumerNA, RaidObservation, State, Progress, WorkProgress, RaidCashFlow, DefectiveMeterCashFlow, RaidProgress
 from nested_admin import NestedModelAdmin, NestedStackedInline, NestedTabularInline
 from django_admin_multi_select_filter.filters import MultiSelectFieldListFilter as mfilter, MultiSelectRelatedFieldListFilter as msrf
 from more_admin_filters import MultiSelectFilter as MSF
@@ -58,12 +58,24 @@ class RaidInline(admin.StackedInline):
 class ConsumerInfoInline(admin.TabularInline):
   model = ConsumerInfo.consumers.through
   extra = 0
+  
+class WorkProgressInline(admin.TabularInline):
+  model = WorkProgress
+  extra = 0
+class WorkProgressAdmin(admin.ModelAdmin):
+  pass
+
 class WorkAdmin(admin.ModelAdmin):
+  inlines = [WorkProgressInline]
   list_display = ['status', 'subject', 'deadline', 'priority']
   list_filter = ['status', 'priority', 'deadline']
+  list_per_page = 10
+admin.site.register(WorkProgress, WorkProgressAdmin)
+admin.site.register(Work, WorkAdmin)
 class ConsumerWorkAdmin(admin.ModelAdmin):
   autocomplete_fields = ['consumer']
-  list_display = ['work__status','work','consumer']
+  list_display = ['work__status','work','consumer', 'work__priority']
+  list_filter = ['work__status', 'work__priority', 'work__deadline']
   #list_filter = []
 class ConsumerWorkInline(admin.StackedInline):
   model = ConsumerWork

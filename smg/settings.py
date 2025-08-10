@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'todo',
     'taggit',
+    'widget_tweaks',
     #'anchor',
     'location_field.apps.DefaultConfig',
     #'django.contrib.gis'

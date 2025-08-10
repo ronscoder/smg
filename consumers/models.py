@@ -9,7 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from dateutil.rrule import rrule, MONTHLY
 import calendar
 from dateutil.relativedelta import relativedelta
-
+STATUS = [('DONE','DONE'),('PENDING','PENDING'), ('ONGOING','ONGOING'),('FAILED','FAILED'),('RESOLVED', 'RESOLVED'), ('POSTPONED','POSTPONED'),('--','--')]
 class State(models.Model):
   name = models.CharField(max_length=20)
   text = models.CharField(max_length=50, blank=True, null=True)
@@ -295,7 +295,7 @@ class Todo(models.Model):
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
     content = models.TextField(max_length=255,null=False)
-    status = models.CharField(max_length=10, default='PENDING', choices =[('PENDING','PENDING'),('DONE','DONE'),('HOLD','HOLD'),('SKIP','SKIP')])
+    status = models.CharField(max_length=10, default='PENDING', choices =STATUS)
     remark = models.TextField(max_length=200, blank=True, null=True)
 class DefectiveMeter(models.Model):
   consumer = models.ForeignKey(Consumer, on_delete=models.SET_NULL, null=True)
@@ -331,7 +331,7 @@ class DefectiveMeterProgress(models.Model):
 class Progress(models.Model):
   date = models.DateField(default=timezone.now)
   text = models.CharField(max_length=200)
-  status = models.CharField(max_length=50, choices=[('DONE','DONE'),('PENDING','PENDING'), ('ONGOING','ONGOING'),('FAILED','FAILED'),('--','--')], default='--')
+  status = models.CharField(max_length=50, choices=STATUS, default='--')
   status_text = models.CharField(max_length=200, null=True, blank=True)
   def __str__(self):
     return " | ".join([str(self.date),self.status, self.text])
@@ -370,7 +370,7 @@ class Work(models.Model):
   info = models.TextField(null=True, blank=True)
   deadline = models.DateField(blank=True, null=True)
   priority = models.CharField(max_length=20, default="LOW", choices= [(x,x) for x in ['LOW', 'MEDIUM', 'HIGH']])
-  status = models.CharField(max_length=50, choices=[('DONE','DONE'),('PENDING','PENDING'),('ONGOING','ONGOING'), ('FAILED','FAILED')], default='PENDING')
+  status = models.CharField(max_length=50, choices=STATUS, default='PENDING')
   def __str__(self):
     return " | ".join([self.priority, self.status, self.subject])
 class WorkProgress(models.Model):

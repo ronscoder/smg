@@ -1,0 +1,9 @@
+{% extends 'office/base.html' %}
+
+{% block content %}
+{% for msg in messages %}
+<div class="my-1">
+ {{ msg }}
+</div>
+{% endfor %}
+{% endblock %}

@@ -22,4 +22,6 @@ urlpatterns = [
         path("<int:consumer_id>/", views.consumer_details, name="consumer_details"),
         path("test_api/", views.test_api),
         path("fix_db_changes", views.fix_db_changes, name='fix_db_changes'),
+        path("update_consumer_master", views.update_consumer_master, name='update_consumer_master'),
+        path("messages", views.messages, name='messages'),
         ]

@@ -5,8 +5,72 @@ from .models import Consumer, RaidGroup, RaidGrouping, Raid, ConsumerGroup, Cons
 from django.http import FileResponse
 import pandas as pd
 from django_pandas.io import read_frame
-from .forms import upload_defectives_form
+from .forms import upload_defectives_form, update_consumer_master_form
 
+def messages(request):
+  messages = request.session.pop('messages', None)
+  return render(request, 'consumers/messages.html', {'messages': messages})
+
+def check_existing(df):
+  dfset = set(df['CONSUMER ID'])
+  dbset = set(Consumer.objects.values_list('consumer_id', flat=True))
+  return dfset - dbset
+  
+  
+def update_consumer(r):
+  data = dict(
+    consumer_id = r['CONSUMER ID'],
+    subdivision = 'smg',
+    name = r['CONSUMER NAME'],
+    address = r['ADDRESS'],
+    contact_nos = str(r['MOBILE']),
+    meter_no = r['METER NO'], 
+    connection_id = str(r['Prepaid Conn no']),
+    phase = r['PHASE'],
+    current_outstanding = r['AMOUNT PAYABLE'],
+    bill_upto = None if pd.isna(r['BILL END']) else r['BILL END'],
+    connection_status = r['CONSUMER STATUS'],
+    connection_type = r['CONNECTION TYPE'],
+    load_kw   = r['CONNECTED LOAD']
+    )
+  print(data)
+  try: 
+    c = Consumer(**data)
+    c.save()
+    return f'{c.consumer_id} created'
+  except Exception as ex:
+    print(ex)
+    return f'{data["consumer_id"]} failed'
+  
+#import pdb
+def update_consumer_master(request):
+  if(request.method == 'POST'):
+    form = update_consumer_master_form(request.POST, request.FILES)
+    if(form.is_valid()):
+      print('form is valid')
+      print(form)
+      file = request.FILES['file']
+      if not (file.name.endswith('.xlsx') or file.name.endswith('.xls')):
+        return render(request, 'consumers/update_consumer_master.html', {'form': form, 'error': 'Please upload a xlxs/xls file.'})
+      df = pd.read_excel(file)
+      #print(df.head())
+      ress = []
+      newids = check_existing(df)
+      for cid in newids:
+        #print('getting consumer', cid)
+        r = df.loc[df['CONSUMER ID']== cid].iloc[0]
+        res = update_consumer(r)
+        ress.append(res)
+        #print(r)
+      request.session['messages'] = ress
+      return redirect('messages')
+      #return render(request, 'consumers/uploaded.html', {'res': ress})
+    else:
+      return render(request, 'consumers/update_consumer_master.html', {'form': form})
+  else:
+    form = update_consumer_master_form()
+  return render(request, 'consumers/update_consumer_master.html', {'form': form})
+    
 def add_defective(r):
   meter_no = r['meter_no']
   dms = DefectiveMeter.objects.filter(meter_no=meter_no)
