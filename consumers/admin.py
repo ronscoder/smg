@@ -6,6 +6,8 @@ from .models import Consumer, ConsumerHistory, UnauthConsumer, Raid, CashFlow, S
 from nested_admin import NestedModelAdmin, NestedStackedInline, NestedTabularInline
 from django_admin_multi_select_filter.filters import MultiSelectFieldListFilter as mfilter, MultiSelectRelatedFieldListFilter as msrf
 from more_admin_filters import MultiSelectFilter as MSF
+from django.contrib.contenttypes.admin import GenericStackedInline, GenericTabularInline
+
 class ConsumerGroupingAdmin(admin.ModelAdmin):
   search_fields = ['consumer__' + x for x in ['name', 'meter_no', 'consumer_id']]
   autocomplete_fields = ['consumer']
@@ -23,12 +25,10 @@ class ConsumerGroupingInline(admin.TabularInline):
   model = ConsumerGrouping
   extra = 0
 
-class CashFlowInline(admin.TabularInline):
-  model = CashFlow
-  extra = 0
 class ConsumerHistoryInline(admin.StackedInline):
     model = ConsumerHistory
     extra = 0
+    show_change_link = True
 class HistoryLogAdmin(admin.ModelAdmin):
   list_display = ['history', 'log', 'log__status']
 #admin.site.register(HistoryLog, HistoryLogAdmin)
@@ -39,6 +39,8 @@ class HistoryLogInline(admin.StackedInline):
 class HistoryCashflowInline(admin.StackedInline):
   model = ConsumerHistory.cash_flows.through
   extra=0
+  show_change_link = True
+  
 class ConsumerHistoryAdmin(admin.ModelAdmin):
   inlines = [HistoryLogInline, HistoryCashflowInline]
   list_filter = [('tags__name', MSF),]
@@ -74,7 +76,7 @@ admin.site.register(WorkProgress, WorkProgressAdmin)
 admin.site.register(Work, WorkAdmin)
 class ConsumerWorkAdmin(admin.ModelAdmin):
   autocomplete_fields = ['consumer']
-  list_display = ['work__status','work','consumer', 'work__priority']
+  list_display = ['work__subject', 'consumer__name','work__status','work__priority']
   list_filter = ['work__status', 'work__priority', 'work__deadline']
   #list_filter = []
 class ConsumerWorkInline(admin.StackedInline):
@@ -90,6 +92,7 @@ class MultiConsumerBInline(admin.TabularInline):
   fk_name = 'consumer_b'
   extra = 0
   show_change_link = True
+
 class ConsumerAdmin(admin.ModelAdmin):
     inlines = [ConsumerGroupingInline, ConsumerHistoryInline,RaidInline, ConsumerWorkInline, MultiConsumerInline,MultiConsumerBInline]
     search_fields = ['name','consumer_id','meter_no', 'address']
@@ -135,7 +138,7 @@ class RaidAdmin(admin.ModelAdmin):
       print(kwargs)
     return super().formfield_for_manytomany(db_field, request, **kwargs)
   search_fields = ['consumer__consumer_id', 'consumer__name', 'consumer__meter_no', 'consumer__address']
-  inlines = [RaidProgressInline, RaidEnergyAssessmentInline,RaidCashflowInline, RaidGroupInline] #RaidGroupInline] #CashFlowInline, ]
+  inlines = [RaidProgressInline, RaidEnergyAssessmentInline,RaidCashflowInline, RaidGroupInline]
   list_filter = ['raid_groups','date', 'is_disconnected', 'action', 'observations']
   date_hierarchy = 'date'
   exclude = ['energy_assessments']
@@ -157,12 +160,6 @@ class EnergyAssessmentAdmin(admin.ModelAdmin):
   readonly_fields = ('day_counts','no_months','total_kw','total_units', 'energy_charge','demand_charge','penalised_energy_charge')
   exclude = ["load_surveys"]
 
-
-class CashFlowAdmin(admin.ModelAdmin):
-  date_hierarchy='txn_date'
-  list_filter =['internal']
-  inlines = [HistoryCashflowInline, RaidCashflowInline]
-
 class UnauthConsumerAdmin(admin.ModelAdmin):
   inlines = [RaidInline]
 class DefectiveMeterProgressAdmin(admin.ModelAdmin):
@@ -171,8 +168,11 @@ admin.site.register(DefectiveMeterProgress, DefectiveMeterProgressAdmin)
 class DefectiveMeterProgressInline(admin.StackedInline):
   model = DefectiveMeterProgress
   extra = 0
+class DefectiveMeterCashFlowInline(admin.StackedInline):
+  model = DefectiveMeterCashFlow
+  extra = 0
 class DefectiveMeterAdmin(admin.ModelAdmin):
-  inlines = [DefectiveMeterProgressInline]
+  inlines = [DefectiveMeterProgressInline, DefectiveMeterCashFlowInline]
   autocomplete_fields = ['consumer']
   list_filter = ['prioritized', ]
   search_fields = ['meter_no', 'consumer__name']
@@ -186,6 +186,10 @@ admin.site.register(Raid, RaidAdmin)
 admin.site.register(SolarConsumer, SolarConsumerAdmin)
 admin.site.register(EnergyAssessment, EnergyAssessmentAdmin)
 admin.site.register(LoadSurvey, LoadSurveyAdmin)
+class CashFlowAdmin(admin.ModelAdmin):
+  date_hierarchy='txn_date'
+  list_filter =['internal']
+  inlines = [HistoryCashflowInline, RaidCashflowInline]
 admin.site.register(CashFlow, CashFlowAdmin)
 admin.site.register(ConsumerInfo)
 admin.site.register(Staff)
@@ -194,6 +198,8 @@ admin.site.register(ConsumerGroup, ConsumerGroupAdmin)
 #admin.site.register(ConsumerSelection)
 admin.site.register(Tariff)
 admin.site.register(TemporaryConnection)
+class TodoAdmin(admin.ModelAdmin):
+  inlines = []
 admin.site.register(Todo)
 
 class ComplaintLogInline(admin.TabularInline):
@@ -235,7 +241,13 @@ class ConsumerNAAdmin(admin.ModelAdmin):
 admin.site.register(ConsumerNA, ConsumerNAAdmin)
 admin.site.register(RaidObservation)
 admin.site.register(State)
-admin.site.register(Progress)
+class TodoInline(GenericStackedInline):
+  model = Todo
+  extra = 0
+  show_change_link = True
+class ProgressAdmin(admin.ModelAdmin):
+  inlines = [TodoInline]
+admin.site.register(Progress, ProgressAdmin)
 admin.site.register(RaidCashFlow)
 class DefectiveMeterCashFlowAdmin(admin.ModelAdmin):
   search_fields = ['defective_meter__meter_no', 'defective_meter__consumer__name']
@@ -247,3 +259,6 @@ class UnmigratedMeterAdmin(admin.ModelAdmin):
   list_display = ['meter_no', 'name', 'status', 'info', 'consumer_id']
   list_filter = ['status']
 admin.site.register(UnmigratedMeter, UnmigratedMeterAdmin)
+
+#class HistoryCashFlowAdmin(admin.ModelAdmin):
+  

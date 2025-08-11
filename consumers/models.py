@@ -49,6 +49,10 @@ class CashFlow(models.Model):
   debit= models.BooleanField(default=False)
   revenue = models.BooleanField(default=False)
   txn_ref = models.CharField(max_length=50, blank=True, null=True)
+  def object(self):
+    if(self._adding):
+      return ""
+    
   def __str__(self):
     return f'{"-" if (self.debit or self.revenue) else "+"}{self.amount}|{self.txn_date}|{self.txn_text}'
   def save(self, *args, **kwargs):
@@ -61,7 +65,7 @@ class LoadSurvey(models.Model):
   kw = models.FloatField()
   day_hours = models.IntegerField()
   #loading_group = models.CharField(max_length=100, blank=True, null=True)
-  remark = models.CharField(max_length=50, blank=True, null=True)
+  remark = models.TextField(blank=True, null=True)
   def day_units(self):
     if(self._state.adding):
       return 0
@@ -211,7 +215,7 @@ class ConsumerHistory(models.Model):
   def __str__(self):
       return f'{self.consumer} — {self.remark}'
   energy_assessments = models.ManyToManyField(EnergyAssessment, blank=True)
-  cash_flows = models.ManyToManyField(CashFlow, blank=True)
+  cash_flows = models.ManyToManyField(CashFlow, blank=True, related_name='history_cashflows')
 class Staff(models.Model):
   name = models.CharField(max_length=100)
   is_staff = models.BooleanField(default=True)
@@ -271,6 +275,8 @@ class Raid(models.Model):
 class RaidCashFlow(models.Model):
   raid = models.ForeignKey(Raid, on_delete=models.SET_NULL, null=True)
   cash_flow = models.ForeignKey(CashFlow, on_delete=models.CASCADE)
+  def __str__(self):
+    return f'{self.cash_flow}, {self.raid}'
 class RaidObservation(models.Model):
   #raid = models.ForeignKey(Raid, on_delete= models.SET_NULL)
   text = models.CharField(max_length=30)
@@ -303,6 +309,8 @@ class Todo(models.Model):
     content = models.TextField(max_length=255,null=False)
     status = models.CharField(max_length=10, default='PENDING', choices =STATUS)
     remark = models.TextField(max_length=200, blank=True, null=True)
+    def __str__(self):
+      return f'{self.content} | {self.status}'
 class DefectiveMeter(models.Model):
   consumer = models.ForeignKey(Consumer, on_delete=models.SET_NULL, null=True)
   #fetch = models.BooleanField(default=False)
@@ -440,9 +448,10 @@ class ConsumerNA(models.Model):
   tags = TaggableManager(blank=True)
 
 class DefectiveMeterCashFlow(models.Model):
-  defective_meter = models.OneToOneField(DefectiveMeter, on_delete=models.CASCADE)
-  cash_flows = models.ForeignKey(CashFlow, on_delete=models.CASCADE)
+  defective_meter = models.ForeignKey(DefectiveMeter, on_delete=models.CASCADE)
+  cash_flows = models.ForeignKey(CashFlow, on_delete=models.CASCADE, null=True)
   
+from django.db.models.functions import Lower 
 class UnmigratedMeter(models.Model):
   meter_no = models.CharField(max_length=20)
   connection_id = models.CharField(max_length=50, blank=True, null=True)
@@ -453,6 +462,10 @@ class UnmigratedMeter(models.Model):
   status = models.CharField(max_length=50, blank=True, null=True)
   remark = models.TextField(blank=True)
   consumer_id = models.IntegerField(blank=True, null=True)
+  class Meta:
+        constraints = [
+            models.UniqueConstraint(Lower('meter_no'), name='unique_lower_meter_no')
+        ]
   
   
   
