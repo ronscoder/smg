@@ -270,7 +270,10 @@ class Raid(models.Model):
           RaidGrouping.objects.get_or_create(raid=self, group=rg)
         #super().save(*args, **kwargs)
     def __str__(self):
-      obs = ", ".join([x.text for x in self.observations.all()])
+      obss = self.observations.all()
+      obs = ""
+      if(obss):
+        obs = ", ".join([x.text for x in self.observations.all()])
       return f'{self.unauth}' if self.consumer==None else f'{self.consumer}, [{obs}], [{self.action}],{"disconnected" if self.is_disconnected else " "}'
 class RaidCashFlow(models.Model):
   raid = models.ForeignKey(Raid, on_delete=models.SET_NULL, null=True)
@@ -458,6 +461,7 @@ class UnmigratedMeter(models.Model):
   name = models.CharField(max_length=50, blank=True, null=True)
   address = models.CharField(max_length=50, blank=True, null=True)
   contacts = models.CharField(max_length=50, blank=True, null=True)
+  load_kw = models.FloatField(null=True, blank=True)
   info = models.TextField(blank=True)
   status = models.CharField(max_length=50, blank=True, null=True)
   remark = models.TextField(blank=True)
