@@ -132,7 +132,7 @@ class EnergyAssessment(models.Model):
           b2=month_unit-100
         else:
           b2 = 0
-      print(f'({self.tariff.rate1}*{b1} + {self.tariff.rate2}*{b2} + {self.tariff.rate3}*{b3})*{self.tariff.load_factor}*{self.tariff.demand_factor}')
+      #print(f'({self.tariff.rate1}*{b1} + {self.tariff.rate2}*{b2} + {self.tariff.rate3}*{b3})*{self.tariff.load_factor}*{self.tariff.demand_factor}')
       energy_charge += (self.tariff.rate1*b1 + self.tariff.rate2*b2 + self.tariff.rate3*b3)
     return round(energy_charge,2)
   penalty_factor = models.FloatField(default=3.0)
@@ -148,7 +148,7 @@ class EnergyAssessment(models.Model):
   def total_units(self):
     if(self._state.adding):
       return 0
-    print(f'{self.day_counts()} * {self.daily_units()}')
+    #print(f'{self.day_counts()} * {self.daily_units()}')
     return round(self.day_counts() * self.daily_units(),1)
   def no_months(self):
     if(self._state.adding):

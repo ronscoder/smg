@@ -66,9 +66,11 @@ class WorkProgressInline(admin.TabularInline):
   extra = 0
 class WorkProgressAdmin(admin.ModelAdmin):
   pass
-
+class ConsumerWorkInline(admin.StackedInline):
+  model = ConsumerWork
+  extra = 0
 class WorkAdmin(admin.ModelAdmin):
-  inlines = [WorkProgressInline]
+  inlines = [ConsumerWorkInline, WorkProgressInline]
   list_display = ['status', 'subject', 'deadline', 'priority']
   list_filter = ['status', 'priority', 'deadline']
   list_per_page = 10
@@ -79,9 +81,6 @@ class ConsumerWorkAdmin(admin.ModelAdmin):
   list_display = ['work__subject', 'consumer__name','work__status','work__priority']
   list_filter = ['work__status', 'work__priority', 'work__deadline']
   #list_filter = []
-class ConsumerWorkInline(admin.StackedInline):
-  model = ConsumerWork
-  extra = 0
 class MultiConsumerInline(admin.TabularInline):
   model = MultiConsumer
   fk_name = 'consumer'
