@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Project, Site, Material, Unit, WorkItem, ItemRate,WorkGroup, Package,Party, MaterialBOQ, MaterialExisting, MaterialDismantled, WorkProgress, CashFlow, Person
+from .models import Project, Site, Material, Unit, WorkItem, ItemRate,WorkGroup, Package,Party, MaterialBOQ, WorkProgress, CashFlow, Person
 from nested_admin import NestedModelAdmin, NestedStackedInline, NestedTabularInline
 
 class PackageAdmin(admin.ModelAdmin):
@@ -12,15 +12,18 @@ class WorkProgressInline(admin.TabularInline):
   extra = 0
   show_change_link = True
 class WorkItemAdmin(admin.ModelAdmin):
-  list_display = ['name', 'unit__short', 'ref_material__name']
+  list_display = ['name', 'unit', 'ref_material__name']
   list_filter = ['ref_material__name']
   list_per_page = 5
-  readonly_fields = ['site_quantity']
+  readonly_fields = ['site_quantity','unit']
   inlines = [WorkProgressInline]
 class ItemRateAdmin(admin.ModelAdmin):
-  list_display = ['work_item__name','rate','work_item__unit__short', 'party__name','work_item__ref_material']
-  list_per_page = 10
-  list_filter = ['party__name', 'work_item__name']
+  list_display = ['work_item__name','rate','def_work_item__unit__short','work_item__ref_material',  'party__name']
+  @admin.display(description="unit")
+  def def_work_item__unit__short(self, obj):
+    return obj.work_item.ref_material.unit.short
+  #list_per_page = 10
+  list_filter = ['party__name', 'work_item__name', 'settled']
 class ItemRateGroupAdmin(admin.ModelAdmin):
   pass
   #list_display = ['package', 'party']
@@ -28,17 +31,22 @@ class WorkGroupAdmin(admin.ModelAdmin):
   list_display = ['package__name','party__name', 'estimate', 'expended', 'margin', 'total_lt_poles']
   list_filter = ['party', 'package']
   readonly_fields = ['estimate', 'expended', 'margin', 'total_lt_poles']
-
+from .admin_filters import SitePackagesFilter
 class MaterialBOQAdmin(admin.ModelAdmin):
   list_display = ['material', 'quantity','site__name', 'quantity_issued', 'quantity_utilised']
-  list_filter = ['material', 'site']
+  list_filter = ['material', 'site',] #SitePackagesFilter]
   list_per_page = 8
+  #autocomplete_fields = ['material__name']
   def qty_nil(self, obj):
     return not obj.quantity > 0
   #readonly_fields = ['qty_nil']
 admin.site.register(Project)
+
 class SiteAdmin(admin.ModelAdmin):
-  list_display = ['name', 'status']
+  list_display = ['name', 'status', 'packages']
+ # search_fields = ['name']
+  #list_filter = ['packages']
+  #readonly_fields = ['packages']
 admin.site.register(Site, SiteAdmin)
 admin.site.register(Unit)
 admin.site.register(Material)
@@ -52,8 +60,8 @@ admin.site.register(Party)
 admin.site.register(MaterialBOQ, MaterialBOQAdmin)
 #admin.site.register(MaterialIssued, MaterialIssuedAdmin)
 #admin.site.register(MaterialUtilised)
-admin.site.register(MaterialExisting)
-admin.site.register(MaterialDismantled)
+#admin.site.register(MaterialExisting)
+#admin.site.register(MaterialDismantled)
 #admin.site.register(Estimation, EstimationAdmin)
 class WorkProgressAdmin(admin.ModelAdmin):
   list_display =['date', 'site__name','work_item__name','quantity','target_quantity', 'status']

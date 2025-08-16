@@ -185,6 +185,8 @@ class Consumer(models.Model):
     load_kw = models.IntegerField(blank=True, null=True)
     location = models.CharField(default='24.823,93.957', blank=True, null=True)
     infos = models.ManyToManyField('ConsumerInfo', blank=True)
+    industry = models.CharField(max_length=50, blank=True, null=True)
+    billing_class = models.CharField(max_length=50, blank=True, null=True, choices=[('HT','HT'), ('LT','LT')])
     def __str__(self):
         return f'{self.consumer_id}, {self.name}, {self.address}, {self.meter_no}'
 class ConsumerExtension(models.Model):
@@ -269,11 +271,10 @@ class Raid(models.Model):
         for rg in selrgs:
           RaidGrouping.objects.get_or_create(raid=self, group=rg)
         #super().save(*args, **kwargs)
+    def list_observations(self):
+      return ", ".join([x.text for x in self.observations.all()])
     def __str__(self):
-      obss = self.observations.all()
-      obs = ""
-      if(obss):
-        obs = ", ".join([x.text for x in self.observations.all()])
+      obs = self.list_observations()
       return f'{self.unauth}' if self.consumer==None else f'{self.consumer}, [{obs}], [{self.action}],{"disconnected" if self.is_disconnected else " "}'
 class RaidCashFlow(models.Model):
   raid = models.ForeignKey(Raid, on_delete=models.SET_NULL, null=True)

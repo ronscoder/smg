@@ -24,4 +24,6 @@ urlpatterns = [
         path("fix_db_changes", views.fix_db_changes, name='fix_db_changes'),
         path("update_consumer_master", views.update_consumer_master, name='update_consumer_master'),
         path("messages", views.messages, name='messages'),
+        path("search_consumers", views.search_consumers, name='search_consumers'),
+        path("fetch_cdetails/<int:consumer_id>/", views.fetch_cdetails, name='fetch_cdetails'),
         ]

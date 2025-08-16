@@ -1,7 +1,63 @@
 {% extends 'office/base.html' %}
 {% block content %}
-
+<div>
 <a href="{% url 'fix_db_changes' %}">separate work </a>
 <a href="{% url 'update_consumer_master' %}">update consumer master</a>
-
+</div>
+<div id='consumer' class="mt-4 border">
+  <form @submit.prevent="search_consumer()">
+    {% csrf_token %}
+    <input id="search_text" name="search_text" type="text" maxlength="50" required v-model="search_text" 
+    class="border px-1 mx-1"/>
+    <input type="submit" value="search"/>
+  </form>
+  <div>
+    <div v-for="c in consumers" :key="c[0]" @click="fetch_cdetails(c[0])">[[c]]</div>
+  </div>
+  <div>
+    [[consumer]]
+  </div>
+</div>
+{% endblock %}
+{% block script %}
+<script>
+ Vue.createApp({
+   delimiters: ['[[', ']]'],
+   data(){
+     return {
+       message: "helloooo",
+       counter: Vue.ref(0),
+       search_text: "",
+       consumers: [],
+       consumer: null
+     }
+   },
+   methods: {
+     fetch_cdetails(cid){
+      axios.get("fetch_cdetails/"+cid).then(response=>{
+         this.consumer = response.data
+       }).catch(error=>{
+         this.message=error
+       })
+     },
+     increase(){
+       this.counter++;
+     },
+     search_consumer(){
+       let formdata = new FormData();
+      formdata.append("search_text", this.search_text);
+      //this.message = axios.post;
+       axios.post("{% url 'search_consumers' %}", formdata, {
+                headers: {
+                    'X-CSRFToken': Cookies.get('csrftoken')
+                }
+            }).then(response => {
+                this.consumers = response.data
+            }).catch(error =>{
+              this.message = error
+            });
+     }
+   }
+ }).mount("#consumer");
+</script>
 {% endblock %}

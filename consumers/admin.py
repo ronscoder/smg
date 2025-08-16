@@ -93,7 +93,7 @@ class MultiConsumerBInline(admin.TabularInline):
   show_change_link = True
 
 class ConsumerAdmin(admin.ModelAdmin):
-    inlines = [ConsumerGroupingInline, ConsumerHistoryInline,RaidInline, ConsumerWorkInline, MultiConsumerInline,MultiConsumerBInline]
+    #inlines = [ConsumerGroupingInline, ConsumerHistoryInline,RaidInline, ConsumerWorkInline, MultiConsumerInline,MultiConsumerBInline]
     search_fields = ['name','consumer_id','meter_no', 'address']
     list_filter = ['tags', 'phase', ]
     list_per_page = 10
@@ -114,6 +114,7 @@ class RaidGroupingAdmin(admin.ModelAdmin):
 class RaidCashflowInline(admin.StackedInline):
   model = RaidCashFlow
   extra=0
+  show_change_link=True
 class RaidGroupInline(admin.TabularInline):
   model = RaidGrouping
   extra = 0
@@ -137,7 +138,7 @@ class RaidAdmin(admin.ModelAdmin):
       print(kwargs)
     return super().formfield_for_manytomany(db_field, request, **kwargs)
   search_fields = ['consumer__consumer_id', 'consumer__name', 'consumer__meter_no', 'consumer__address']
-  inlines = [RaidProgressInline, RaidEnergyAssessmentInline,RaidCashflowInline, RaidGroupInline]
+  inlines = [RaidProgressInline, RaidGroupInline]
   list_filter = ['raid_groups','date', 'is_disconnected', 'action', 'observations']
   date_hierarchy = 'date'
   exclude = ['energy_assessments']
@@ -185,10 +186,14 @@ admin.site.register(Raid, RaidAdmin)
 admin.site.register(SolarConsumer, SolarConsumerAdmin)
 admin.site.register(EnergyAssessment, EnergyAssessmentAdmin)
 admin.site.register(LoadSurvey, LoadSurveyAdmin)
+class DefectiveMeterCashflowInline(admin.TabularInline):
+  model = DefectiveMeterCashFlow
+  extra= 0
+  show_change_link = True
 class CashFlowAdmin(admin.ModelAdmin):
   date_hierarchy='txn_date'
   list_filter =['internal']
-  inlines = [HistoryCashflowInline, RaidCashflowInline]
+  inlines = [HistoryCashflowInline, RaidCashflowInline, DefectiveMeterCashflowInline]
 admin.site.register(CashFlow, CashFlowAdmin)
 admin.site.register(ConsumerInfo)
 admin.site.register(Staff)
@@ -251,6 +256,7 @@ admin.site.register(RaidCashFlow)
 class DefectiveMeterCashFlowAdmin(admin.ModelAdmin):
   search_fields = ['defective_meter__meter_no', 'defective_meter__consumer__name']
   autocomplete_fields = ['defective_meter']
+  list_display=['defective_meter', 'cash_flows']
   
 admin.site.register(DefectiveMeterCashFlow, DefectiveMeterCashFlowAdmin)
 

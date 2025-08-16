@@ -22,16 +22,21 @@ class Material(models.Model):
 class Site(models.Model):
   name = models.CharField(max_length=100)
   status = models.CharField(max_length=100)
+  def packages(self):
+    ps = Package.objects.filter(sites=self)
+    return ", ".join([p.name for p in ps])
   def __str__(self):
     return f'{self.name}'
   
 class WorkItem(models.Model):
   name = models.CharField(max_length=100)
   description = models.TextField(null=True, blank=True)
-  unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
+  #unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
   #TODO add material requirement per unit
   ref_material = models.ForeignKey('Material', on_delete=models.CASCADE, null=True)
   index = models.BooleanField(default=False)
+  def unit(self):
+    return self.ref_material.unit.short
   def site_quantity(self):
     matboqs = MaterialBOQ.objects.filter(material=self.ref_material)
     return ", ".join([f'{x.site.name}: {x.quantity}' for x in matboqs])
@@ -68,14 +73,6 @@ class MaterialBOQ(models.Model):
 
   def __str__(self):
     return self.material.name
-class MaterialExisting(models.Model):
-  site = models.ForeignKey(Site, on_delete=models.CASCADE)
-  material = models.ForeignKey(Material, on_delete=models.CASCADE)
-  quantity = models.FloatField()
-class MaterialDismantled(models.Model):
-  site = models.ForeignKey(Site, on_delete=models.CASCADE)
-  material = models.ForeignKey(Material, on_delete=models.CASCADE)
-  quantity = models.FloatField()
 
 from django.utils import timezone
 class WorkProgress(models.Model):
@@ -137,7 +134,7 @@ class WorkGroup(models.Model):
     for site in sites:
       for item in items:
         rate = item.rate
-        print(item, rate)
+        #print(item, rate)
         work_item = item.work_item
         ref_material = work_item.ref_material
         try:

@@ -6,7 +6,7 @@ from django.http import FileResponse
 import pandas as pd
 from django_pandas.io import read_frame
 from .forms import upload_defectives_form, update_consumer_master_form
-
+from django.db.models import Q
 def messages(request):
   messages = request.session.pop('messages', None)
   return render(request, 'consumers/messages.html', {'messages': messages})
@@ -177,7 +177,7 @@ def download_raidgroup(request, rgid):
   'observation': ", ".join([o.text for o in x.observations.all()]),
   'theft': 'YES' if any([x.theft for x in x.observations.all()]) else 'NO',
   'is_disconnected': 'YES' if x.is_disconnected else 'NO',
-  'penalised': 'YES' if x.penalty_paid else 'NO',
+  'penalised': 'YES' if any([y.cash_flow.revenue for y in RaidCashFlow.objects.filter(raid=x)]) else 'NO',
   'theft_period_days': sum([y.day_counts() for y in x.energy_assessments.all()]),
   'unit_assessed': sum([y.total_units() for y in x.energy_assessments.all()]),
   'energy_charge': sum([y.energy_charge() for y in x.energy_assessments.all()]),
@@ -268,3 +268,15 @@ def download_duplicates(request):
 def fix_db_changes(request):
   # this is a changing code... dont use again
   return HttpResponse("Done")
+def fetch_cdetails(request, consumer_id):
+  #consumer_id = request.GET.get('consumer_id')
+  c = Consumer.objects.get(consumer_id=consumer_id)
+  return JsonResponse([c.consumer_id, c.name, c.address], safe=False)
+def search_consumers(request):
+  print('searching for...')
+  if(request.method == 'POST'):
+    search_text = request.POST['search_text']
+    consumers = Consumer.objects.filter(Q(name__icontains=search_text) | Q(consumer_id__icontains=search_text) | Q(meter_no__icontains=search_text))
+    results = [(x.consumer_id,x.name,x.address, x.meter_no) for x in list(consumers)]
+    #print(results)
+    return JsonResponse(results, safe=False)
