@@ -152,7 +152,6 @@ def unrecharged_reports(request):
   df = pd.DataFrame(reps)
   #df.to_excel("unrecharged_reps.xlsx")
   pv = pd.pivot_table(df, values='meter_no', index='actions', aggfunc='count', margins=True, margins_name='Total nos.')
-  #pv.to_excel("unrecharged_summary.xlsx")
   
   reptxt1 = pv.to_html(table_id="pv_unrechargeds", classes=[""])
   reptxt2 = df.to_html(table_id="rep_unrechargeds")
@@ -197,8 +196,13 @@ def download_raidgroup(request, rgid):
 def raidgroupings(request, rgid):
   rg = RaidGroup.objects.get(pk=rgid)
   rgg = RaidGrouping.objects.filter(group=rg, raid__skip=False)
-  rs = [x.raid for x in rgg]
-  context = {'rg': rg, 'rs': rs}
+  #raids = [x.raid for x in rgg]
+  rs = [x.raid.__dict__ for x in rgg]
+  df = pd.DataFrame(list(rs))
+  pv = pd.pivot_table(df, values='consumer_id', index='action', aggfunc='count', margins=True, margins_name='Total nos.')
+  reptxt1 = pv.to_html(table_id="pv_unrechargeds", classes=[""])
+  
+  context = {'rg': rg, 'rs': rs, 'summary': reptxt1}
   return render(request, 'consumers/raidgroupings.html', context)
 
 def raid(request, rid):

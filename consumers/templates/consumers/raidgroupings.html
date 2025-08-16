@@ -5,8 +5,13 @@
   <div>
     No. of raids: {{ rs|length }}
   </div>
+  <div>
+    {{summary|safe}}
+  </div>
   {% for r in rs %}
-  <a href="{% url 'raid' rid=r.id %}" style="display:block; border: 1px solid pink">{{ r }}</a>
+  <div>
+  <a href="{% url 'raid' rid=r.id %}" style="display:block; border: 1px solid pink">{{r}}</a>
+  </div>
   {% endfor %}
 </div>
 
