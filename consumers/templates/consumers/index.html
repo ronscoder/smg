@@ -1,22 +1,41 @@
 {% extends 'office/base.html' %}
 {% block content %}
-<div>
+<div hidden>
 <a href="{% url 'fix_db_changes' %}">separate work </a>
 <a href="{% url 'update_consumer_master' %}">update consumer master</a>
 </div>
-<div id='consumer' class="mt-4 border">
+<div id='consumer' class="mt-4 w-screen">
   <form @submit.prevent="search_consumer()">
     {% csrf_token %}
     <input id="search_text" name="search_text" type="text" maxlength="50" required v-model="search_text" 
     class="border px-1 mx-1"/>
     <input type="submit" value="search"/>
   </form>
-  <div>
-    <div v-for="c in consumers" :key="c[0]" @click="fetch_cdetails(c[0])">[[c]]</div>
+  <div class="h-48 overflow-scroll mt-2 shadow-md border">
+    <div class="border-b" v-for="c in consumers" :key="c[0]" @click="fetch_cdetails(c[0])">[[c]]
+    </div>
   </div>
-  <div>
+  <div class="mt-2">
     [[consumer]]
   </div>
+  <div>
+    <h3>Histories</h3>
+    <div v-for="h in histories" :key="h.id">
+    [[h]]
+    </div>
+  </div>
+  <div v-if="raids" class="w-screen">
+    <h3>Raid records</h3>
+    <div class="mt-2" v-for="item in raids" :key="item.id">
+      <div class="flex border-b" v-for="(v,k,i) in item">
+      <div class="w-1/3 overflow-x-scroll inline-block bg-blue-300 text-sm text-green-100">[[ k ]]</div>
+      <div class="w-full inline-block bg-green-100">[[ v ]]</div>
+      </div>
+    </div>
+  </div>
+  <div>[[cash]]</div>
+  <div>[[cgroup]]</div>
+  <div>[[multi]]</div>
 </div>
 {% endblock %}
 {% block script %}
@@ -29,13 +48,16 @@
        counter: Vue.ref(0),
        search_text: "",
        consumers: [],
-       consumer: null
+       consumer: null,
+       histories: null,
+       raids: null
      }
    },
    methods: {
      fetch_cdetails(cid){
       axios.get("fetch_cdetails/"+cid).then(response=>{
-         this.consumer = response.data
+         this.histories = response.data['histories']
+         this.raids = response.data['raids']
        }).catch(error=>{
          this.message=error
        })

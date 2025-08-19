@@ -418,6 +418,7 @@ class RaidGroup(models.Model):
 class RaidGrouping(models.Model):
   raid = models.ForeignKey(Raid, on_delete=models.CASCADE, related_name='raidgroupings')
   group = models.ForeignKey(RaidGroup, on_delete=models.CASCADE)
+  remark = models.CharField(max_length=50, null=True, blank=True)
   def __str__(self):
     return "—".join([self.group.name, self.raid.consumer.name, str(self.raid.consumer.consumer_id), str(self.raid.observations)])
 

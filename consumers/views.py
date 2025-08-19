@@ -1,12 +1,13 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.core import serializers
-from .models import Consumer, RaidGroup, RaidGrouping, Raid, ConsumerGroup, ConsumerGrouping, MultiConsumer, RaidCashFlow, DefectiveMeter
+from .models import Consumer, RaidGroup, RaidGrouping, Raid, ConsumerGroup, ConsumerGrouping, MultiConsumer, RaidCashFlow, DefectiveMeter, ConsumerHistory
 from django.http import FileResponse
 import pandas as pd
 from django_pandas.io import read_frame
 from .forms import upload_defectives_form, update_consumer_master_form
 from django.db.models import Q
+from django.forms.models import model_to_dict
 def messages(request):
   messages = request.session.pop('messages', None)
   return render(request, 'consumers/messages.html', {'messages': messages})
@@ -274,8 +275,11 @@ def fix_db_changes(request):
   return HttpResponse("Done")
 def fetch_cdetails(request, consumer_id):
   #consumer_id = request.GET.get('consumer_id')
-  c = Consumer.objects.get(consumer_id=consumer_id)
-  return JsonResponse([c.consumer_id, c.name, c.address], safe=False)
+  #c = Consumer.objects.get(consumer_id=consumer_id)
+  histories = [{**model_to_dict(h, exclude=['energy_assessments', 'cash_flows']), 'tags':", ".join([t.name for t in h.tags.all()])} for h in ConsumerHistory.objects.filter(consumer__consumer_id = consumer_id)]
+  raids = [{**model_to_dict(x, exclude=['_state', 'observations', 'staffs_engaged','staffs_assignments','energy_assessments','raid_groups','unauth']), 'observations': [y.text for y in x.observations.all()]} for x in Raid.objects.filter(consumer__consumer_id=consumer_id)]
+  #print(raids)
+  return JsonResponse({'histories': histories, 'raids':raids}, safe=False)
 def search_consumers(request):
   print('searching for...')
   if(request.method == 'POST'):

@@ -47,6 +47,7 @@ class ConsumerHistoryAdmin(admin.ModelAdmin):
   list_per_page = 10
   exclude = ['cash_flows']
   list_display = ['__str__',]
+  search_fields = ['consumer__consumer_id', 'consumer__name', 'consumer__meter_no']
 class SolarConsumerInline(admin.StackedInline):
   model = SolarConsumer
   extra = 0
